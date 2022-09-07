@@ -1,0 +1,24 @@
+Outcome of modified ps command:
+
+Pid   Name             State       Prio      Ppid         Stack Base   Stack Ptr   Stack Size   Time elapsed (ms)
+---   ---------------- -----       ----      ----         ----------   ----------  ----------   -----------------
+<pid> <proc name>      <pr state>  <pr prio> <parent pid> <stack base> <stack ptr> <stack size> <time elapsed since creation (ms)
+...
+...
+
+NOTE: 
+- Stack base and stack pointer should be hex values
+- Use only one blank space between each two columns (as in the ps command). See example below.
+
+Example:
+
+xsh $ ps
+Pid Name             State Prio Ppid Stack Base Stack Ptr  Stack Size Time elapsed (ms)
+--- ---------------- ----- ---- ---- ---------- ---------- ---------- -----------------
+  0 prnull           ready    0    0 0x005FDFFC 0x00FFFEA4     8192    17251
+  1 rdsproc          susp   200    0 0x005FBFFC 0x005FBFC8    16384    17251
+  2 ipout            wait   500    0 0x005F7FFC 0x005F7F40     8192    17250
+  3 netin            wait   500    0 0x005F5FFC 0x005F5EE0     8192    17250
+  5 Main process     recv    20    4 0x005E3FFC 0x005E3F64    65536    16241
+  6 shell            recv    50    5 0x005D3FFC 0x005D3C7C     8192    16240
+ 10 ps               curr    20    6 0x005F3FFC 0x005F3DC8     8192        0

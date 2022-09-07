@@ -55,6 +55,10 @@ pid32	create(
 	prptr->prdesc[1] = CONSOLE;
 	prptr->prdesc[2] = CONSOLE;
 
+	/* Record point in time at which the process is created */
+
+	prptr->prtime = ctr1000;
+
 	/* Initialize stack as if the process was called		*/
 
 	*saddr = STACKMAGIC;
