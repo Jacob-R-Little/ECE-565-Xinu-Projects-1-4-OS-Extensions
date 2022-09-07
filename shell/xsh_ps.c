@@ -15,8 +15,7 @@ shellcmd xsh_ps(int nargs, char *args[])
 	char *pstate[]	= {		/* names for process states	*/
 		"free ", "curr ", "ready", "recv ", "sleep", "susp ",
 		"wait ", "rtime"};
-	uint32 curr_time = ctr1000;	/* Capture current time in milliseconds
-									before entering for loop*/
+	uint32 curr_time = ctr1000;	/* Capture current time in milliseconds */
 
 	/* For argument '--help', emit help about the 'ps' command	*/
 
