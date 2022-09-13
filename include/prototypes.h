@@ -43,6 +43,7 @@ extern	syscall	control(did32, int32, int32, int32);
 
 /* in file create.c */
 extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
+extern	pid32 newpid(void);
 
 /* in file ctxsw.S */
 extern	void	ctxsw(void *, void *);
@@ -101,6 +102,9 @@ extern	void	trap(int32);
 
 /* in file exception.c */
 extern  void exception(int32, int32*);
+
+/* in file fork.c */
+extern	pid32	fork(void);
 
 /* in file freebuf.c */
 extern	syscall	freebuf(char *);
