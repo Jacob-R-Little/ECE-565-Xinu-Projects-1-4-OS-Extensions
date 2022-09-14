@@ -288,6 +288,9 @@ extern	devcall	lpread(struct dentry *, char *, int32);
 /* in file lpwrite.c */
 extern	devcall	lpwrite(struct dentry *, char *, int32);
 
+/* in file main.c */
+extern void sync_printf(char *fmt, ...);
+
 /* in file mark.c */
 extern	void	markinit(void);
 extern	status	mark(int32 *);

@@ -16,10 +16,11 @@ pid32	fork(void)
     struct	procent	*parent_prptr;  /* Pointer to proc. table entry for parent */
 	struct	procent	*prptr;		/* Pointer to proc. table entry for child   */
 	int32		i;          /*  */
-    char* parent_saddr;
-	uint32* parent_bp;
+    uint32 *parent_saddr, *parent_stkbase;
+	uint32 *parent_bp, *prev_parent_bp, *parent_sp;
 	uint32		*saddr;		/* Stack address		*/
-	unsigned long *parent_bp_register;		/* Stack Base Pointer Register*/
+	uint32		*child_eip;
+	unsigned long *parent_bp_register, *parent_sp_register;		/* Stack Base Pointer Register*/
 	signed long stack_offset;
     
 	mask = disable();
@@ -27,6 +28,7 @@ pid32	fork(void)
     parent_pid = (pid32)getpid();
     parent_prptr = &proctab[parent_pid];
     parent_saddr = parent_prptr->prstkbase;
+	parent_stkbase = parent_saddr;
 
 	ssize = parent_prptr->prstklen;
 
@@ -72,71 +74,103 @@ pid32	fork(void)
 
 	asm("movl %%ebp, %0\n" :"=r"(parent_bp_register));
 	parent_bp = (uint32 *)parent_bp_register;
-	kprintf("Parent base: %X\nChild base: %X\n", parent_bp, saddr);
+	//sync_printf("Parent base: %X\nChild base: %X\n", parent_bp, saddr);
 
 	/* Determine memory offset between parent and child stacks */
 
 	stack_offset = (long)savsp - (long)((uint32)(parent_prptr->prstkbase));
-	kprintf("%X = %d\n", stack_offset, stack_offset);
+	//sync_printf("%X = %d\n", stack_offset, stack_offset);
 
     /* Copy the contents of the parent stack into the child stack */
 
-	kprintf("Copying parent to child\n");
-    while (parent_saddr>*parent_bp) {	// Where should we stop copying the stack?
+	//stacktrace(getpid());
+	//sync_printf("Copying parent to child\n");
+
+	asm("movl %%esp, %0\n" :"=r"(parent_sp_register));
+	parent_sp = (uint32 *)parent_sp_register;
+	//sync_printf("Parent bp: %X\nParent sp: %X\n", parent_bp, parent_sp);
+
+    while (parent_saddr>parent_sp) {
         *--saddr = *--parent_saddr;
     }
 	
 	/* Update the base pointers for every stack frame */
 	
-	kprintf("Updating base pointers\n");
-	kprintf("Parent: %X -> %X\n", parent_bp, *parent_bp);
-	parent_bp = *parent_bp;
-	kprintf("Parent: %X -> %X\n", parent_bp, *parent_bp);
+	//sync_printf("Updating base pointers\n");
+	//sync_printf("DEBUG 0\n");
 	while (*parent_bp != STACKMAGIC) {
-		 kprintf("Child: %X -> %X\n", (uint32 *)((uint32)parent_bp + stack_offset), (uint32 *)((uint32)(*parent_bp) + stack_offset));
-		 *(uint32 *)((uint32)parent_bp + stack_offset) = (uint32 *)((uint32)(*parent_bp) + stack_offset); 
-		 parent_bp = *parent_bp;
-		 kprintf("Parent: %X -> %X\n", parent_bp, *parent_bp);
+		//sync_printf("DEBUG 1\n");
+		*(uint32 *)((uint32)parent_bp + stack_offset) = (uint32 *)((uint32)(*parent_bp) + stack_offset); 
+		//sync_printf("DEBUG 2\n");
+		prev_parent_bp = parent_bp;
+		//sync_printf("DEBUG 3\n");
+		parent_bp = *parent_bp;
+		//sync_printf("DEBUG 4\n");
 	}
-	kprintf("Child: %X -> %X\n", (uint32 *)((uint32)parent_bp + stack_offset), (uint32 *)((uint32)(*parent_bp) + stack_offset));
-
-	kprintf("Setting up context switch\n");
+	//sync_printf("DEBUG 5\n");
+	//sync_printf("Updating initial stack frame\n");
+	//sync_printf("DEBUG 6\n");
+	//sync_printf("prev_parent_bp = %X\n", prev_parent_bp);
+	//sync_printf("%X <- %X\n", (uint32 *)((uint32)prev_parent_bp + stack_offset - 4), (uint32)(*(uint32 *)((uint32)prev_parent_bp - 4)) + stack_offset);
+	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 4)
+		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 4)) + stack_offset;
+	//sync_printf("%X <- %X\n", (uint32 *)((uint32)prev_parent_bp + stack_offset - 28), (uint32)(*(uint32 *)((uint32)prev_parent_bp - 28)) + stack_offset);
+	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 28)
+		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 28)) + stack_offset;
+	//sync_printf("%X <- %X\n", (uint32 *)((uint32)prev_parent_bp + stack_offset - 32), (uint32)(*(uint32 *)((uint32)prev_parent_bp - 32)) + stack_offset);
+	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 32)
+		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 32)) + stack_offset;
 
 	/* The following entries on the stack must match what ctxsw	*/
 	/*   expects a saved process state to contain: ret address,	*/
 	/*   ebp, interrupt mask, flags, registers, and an old SP	*/
 
-	//*--saddr = (long)funcaddr;	/* Make the stack look like it's*/
-	kprintf("%X\n", (long)(*(uint32 *)((uint32)parent_bp_register+1)));
-	*--saddr = (long)(*(uint32 *)((uint32)parent_bp_register+1));	/* Make the stack look like it's*/
-					/*   half-way through a call to	*/
-					/*   ctxsw that "returns" to the*/
-					/*   new process		*/
-	kprintf("%X\n", (long)((uint32)(*parent_bp_register) + stack_offset));
-	*--saddr = (long)((uint32)(*parent_bp_register) + stack_offset);		/* This will be register ebp	*/
+	//sync_printf("Setting up context switch\n");
+
+	asm volatile("mov $., %0" : "=r"(child_eip) );
+
+	if (parent_pid == getpid()) {
+		*--saddr = child_eip;	/* Make the stack look like it's*/
+						/*   half-way through a call to	*/
+						/*   ctxsw that "returns" to the*/
+						/*   new process		*/
+		*--saddr = (long)((uint32)(parent_bp_register) + stack_offset);		/* This will be register ebp	*/
 					/*   for process exit		*/
-	savsp = (uint32) saddr;		/* Start of frame for ctxsw	*/
-	*--saddr = 0x00000200;		/* New process runs with	*/
-					/*   interrupts enabled		*/
+		savsp = (uint32) saddr;		/* Start of frame for ctxsw	*/
+		*--saddr = 0x00000200;		/* New process runs with	*/
+						/*   interrupts enabled		*/
 
-	/* Basically, the following emulates an x86 "pushal" instruction*/
+		/* Basically, the following emulates an x86 "pushal" instruction*/
 
-	*--saddr = NPROC;			/* %eax */
-	//*--saddr = (long)(*(uint32 *)((uint32)parent_bp_register+3));			/* %ecx */
-	*--saddr = 0;			/* %ecx */
-	*--saddr = 0;			/* %edx */
-	*--saddr = 0;			/* %ebx */
-	*--saddr = 0;			/* %esp; value filled in below	*/
-	pushsp = saddr;			/* Remember this location	*/
-	*--saddr = savsp;		/* %ebp (while finishing ctxsw)	*/
-	*--saddr =  0;			/* %esi */
-	*--saddr =  0;			/* %edi */
-	*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
+		*--saddr = 0;			/* %eax */
+		*--saddr = 0;			/* %ecx */
+		*--saddr = 0;			/* %edx */
+		*--saddr = 0;			/* %ebx */
+		*--saddr = 0;			/* %esp; value filled in below	*/
+		pushsp = saddr;			/* Remember this location	*/
+		*--saddr = savsp;		/* %ebp (while finishing ctxsw)	*/
+		*--saddr =  0;			/* %esi */
+		*--saddr =  0;			/* %edi */
+		*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
 
-	kprintf("Add child to ready list\n");
+		//xsh_ps(1);
 
-    insert(pid, readylist, prptr->prprio);  // insert child into the ready list
-	restore(mask);
-	kprintf("Return from fork\n");
-	return pid;
+		// sync_printf("\n--- PARENT STACK ---\n");
+		// stacktrace(getpid());
+		// sync_printf("\n--- CHILD STACK ---\n");
+		// stacktrace(pid);
+		// sync_printf("\n--- END OF STACKS ---\n");
+
+		//sync_printf("Add child to ready list\n");
+
+		insert(pid, readylist, prptr->prprio);  // insert child into the ready list
+		restore(mask);
+
+		//sync_printf("Return from fork\n");
+
+		return pid;
+	}
+	//child_start:
+		//sync_printf("I'm Child: NPROC = %d\n", NPROC);
+		return NPROC;
 }
