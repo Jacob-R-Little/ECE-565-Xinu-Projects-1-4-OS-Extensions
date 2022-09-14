@@ -20,3 +20,6 @@ config/y.tab.c
 include/conf.h
 
 system/conf.c
+
+#ignore vscode directory
+.vscode

@@ -16,19 +16,21 @@ pid32	fork(void)
     struct	procent	*parent_prptr;  /* Pointer to proc. table entry for parent */
 	struct	procent	*prptr;		/* Pointer to proc. table entry for child   */
 	int32		i;          /*  */
-    uint32 *parent_saddr, *parent_stkbase;
-	uint32 *parent_bp, *prev_parent_bp, *parent_sp;
-	uint32		*saddr;		/* Stack address		*/
-	uint32		*child_eip;
-	unsigned long *parent_bp_register, *parent_sp_register;		/* Stack Base Pointer Register*/
-	signed long stack_offset;
+    uint32 	*parent_saddr;	/* Stack address of parent	*/	
+	uint32 	*parent_bp;		/* Stack base address of parent	*/	
+	uint32 	*prev_parent_bp;	/* Address to save previous stack address of parent	*/	
+	uint32 	*parent_sp;		/* Stack pointer of parent	*/
+	uint32		*saddr;		/* Stack address of child	*/
+	uint32		*child_eip;	/* Instruction pointer where child begins execution	*/
+	unsigned long *parent_bp_register;	/* Stack Base Pointer Register*/
+	unsigned long *parent_sp_register;	/* Stack Pointer Register*/
+	signed long stack_offset;	/* Difference between parent and child stacks */
     
 	mask = disable();
 
     parent_pid = (pid32)getpid();
     parent_prptr = &proctab[parent_pid];
     parent_saddr = parent_prptr->prstkbase;
-	parent_stkbase = parent_saddr;
 
 	ssize = parent_prptr->prstklen;
 
@@ -45,7 +47,7 @@ pid32	fork(void)
 	prptr = &proctab[pid];
 
 	/* Initialize process table entry for new process */
-	prptr->prstate = PR_READY;	/* Initial state is ready	*/  // ASK ABOUT THIS!!!
+	prptr->prstate = PR_READY;	/* Initial state is ready	*/
 	prptr->prprio = parent_prptr->prprio;
 	prptr->prstkbase = (char *)saddr;
 	prptr->prstklen = ssize;
@@ -70,25 +72,21 @@ pid32	fork(void)
 	*saddr = STACKMAGIC;
     savsp = (uint32)saddr;
 
-	/* Retrieve the current stack base pointer */
+	/* Retrieve the parent stack base pointer */
 
 	asm("movl %%ebp, %0\n" :"=r"(parent_bp_register));
 	parent_bp = (uint32 *)parent_bp_register;
-	//sync_printf("Parent base: %X\nChild base: %X\n", parent_bp, saddr);
 
 	/* Determine memory offset between parent and child stacks */
 
 	stack_offset = (long)savsp - (long)((uint32)(parent_prptr->prstkbase));
-	//sync_printf("%X = %d\n", stack_offset, stack_offset);
 
-    /* Copy the contents of the parent stack into the child stack */
-
-	//stacktrace(getpid());
-	//sync_printf("Copying parent to child\n");
+    /* Retrieve the parent stack pointer */
 
 	asm("movl %%esp, %0\n" :"=r"(parent_sp_register));
 	parent_sp = (uint32 *)parent_sp_register;
-	//sync_printf("Parent bp: %X\nParent sp: %X\n", parent_bp, parent_sp);
+
+	/* Copy the contents of the parent stack into the child stack */
 
     while (parent_saddr>parent_sp) {
         *--saddr = *--parent_saddr;
@@ -96,49 +94,37 @@ pid32	fork(void)
 	
 	/* Update the base pointers for every stack frame */
 	
-	//sync_printf("Updating base pointers\n");
-	//sync_printf("DEBUG 0\n");
 	while (*parent_bp != STACKMAGIC) {
-		//sync_printf("DEBUG 1\n");
 		*(uint32 *)((uint32)parent_bp + stack_offset) = (uint32 *)((uint32)(*parent_bp) + stack_offset); 
-		//sync_printf("DEBUG 2\n");
 		prev_parent_bp = parent_bp;
-		//sync_printf("DEBUG 3\n");
 		parent_bp = *parent_bp;
-		//sync_printf("DEBUG 4\n");
 	}
-	//sync_printf("DEBUG 5\n");
-	//sync_printf("Updating initial stack frame\n");
-	//sync_printf("DEBUG 6\n");
-	//sync_printf("prev_parent_bp = %X\n", prev_parent_bp);
-	//sync_printf("%X <- %X\n", (uint32 *)((uint32)prev_parent_bp + stack_offset - 4), (uint32)(*(uint32 *)((uint32)prev_parent_bp - 4)) + stack_offset);
-	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 4)
-		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 4)) + stack_offset;
-	//sync_printf("%X <- %X\n", (uint32 *)((uint32)prev_parent_bp + stack_offset - 28), (uint32)(*(uint32 *)((uint32)prev_parent_bp - 28)) + stack_offset);
-	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 28)
-		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 28)) + stack_offset;
-	//sync_printf("%X <- %X\n", (uint32 *)((uint32)prev_parent_bp + stack_offset - 32), (uint32)(*(uint32 *)((uint32)prev_parent_bp - 32)) + stack_offset);
-	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 32)
-		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 32)) + stack_offset;
+
+	/* Update the initial stack frame */
+	
+	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 1*sizeof(uint32))
+		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 1*sizeof(uint32))) + stack_offset;
+	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 7*sizeof(uint32))
+		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 7*sizeof(uint32))) + stack_offset;
+	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 8*sizeof(uint32))
+		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 8*sizeof(uint32))) + stack_offset;
 
 	/* The following entries on the stack must match what ctxsw	*/
 	/*   expects a saved process state to contain: ret address,	*/
 	/*   ebp, interrupt mask, flags, registers, and an old SP	*/
 
-	//sync_printf("Setting up context switch\n");
-
-	asm volatile("mov $., %0" : "=r"(child_eip) );
+	asm volatile("mov $., %0" : "=r"(child_eip) ); /* Save EIP so that Child can start execution here */
 
 	if (parent_pid == getpid()) {
-		*--saddr = child_eip;	/* Make the stack look like it's*/
-						/*   half-way through a call to	*/
-						/*   ctxsw that "returns" to the*/
-						/*   new process		*/
+		*--saddr = child_eip;		/* Make the stack look like it's*/
+									/*   half-way through a call to	*/
+									/*   ctxsw that "returns" to the*/
+									/*   new process		*/
 		*--saddr = (long)((uint32)(parent_bp_register) + stack_offset);		/* This will be register ebp	*/
-					/*   for process exit		*/
+									/*   for process exit		*/
 		savsp = (uint32) saddr;		/* Start of frame for ctxsw	*/
 		*--saddr = 0x00000200;		/* New process runs with	*/
-						/*   interrupts enabled		*/
+									/*   interrupts enabled		*/
 
 		/* Basically, the following emulates an x86 "pushal" instruction*/
 
@@ -153,24 +139,13 @@ pid32	fork(void)
 		*--saddr =  0;			/* %edi */
 		*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
 
-		//xsh_ps(1);
+		/* insert child into the ready list */
+		insert(pid, readylist, prptr->prprio);
 
-		// sync_printf("\n--- PARENT STACK ---\n");
-		// stacktrace(getpid());
-		// sync_printf("\n--- CHILD STACK ---\n");
-		// stacktrace(pid);
-		// sync_printf("\n--- END OF STACKS ---\n");
-
-		//sync_printf("Add child to ready list\n");
-
-		insert(pid, readylist, prptr->prprio);  // insert child into the ready list
 		restore(mask);
-
-		//sync_printf("Return from fork\n");
 
 		return pid;
 	}
-	//child_start:
-		//sync_printf("I'm Child: NPROC = %d\n", NPROC);
-		return NPROC;
+
+	return NPROC;
 }
