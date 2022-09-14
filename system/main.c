@@ -22,22 +22,12 @@ void sync_printf(char *fmt, ...)
 process test1(){
 	
 	sync_printf("HELLO! I am process %d\n", currpid);
-	
-	//stacktrace(getpid());
 
 	pid32 pid = fork();
-	//stacktrace(getpid());
 	if (pid == SYSERR)	
 		sync_printf("process %d:: fork failed\n",currpid);
 	else if (pid != NPROC){
 		sync_printf("process %d:: forked child %d\n", currpid, pid);
-		
-		// sync_printf("\n--- PARENT STACK ---\n");
-		// stacktrace(getpid());
-		// sync_printf("\n--- CHILD STACK ---\n");
-		// stacktrace(pid);
-		// sync_printf("\n--- END OF STACKS ---\n");
-
 		receive();
 	}
 
