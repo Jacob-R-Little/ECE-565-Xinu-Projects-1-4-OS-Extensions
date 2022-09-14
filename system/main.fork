@@ -3,9 +3,9 @@
 #include <xinu.h>
 #include <stdarg.h>
 
-//#define TESTCASE1
-//#define TESTCASE2
-//#define TESTCASE3
+#define TESTCASE1
+#define TESTCASE2
+#define TESTCASE3
 
 uint32 sum(uint32 a, uint32 b){
 	return (a+b);
@@ -22,11 +22,8 @@ void sync_printf(char *fmt, ...)
 process test1(){
 	
 	sync_printf("HELLO! I am process %d\n", currpid);
-	
-	stacktrace(getpid());
 
 	pid32 pid = fork();
-	//stacktrace(getpid());
 	if (pid == SYSERR)	
 		sync_printf("process %d:: fork failed\n",currpid);
 	else if (pid != NPROC){
@@ -95,10 +92,6 @@ process	main(void)
 {
 
 pid32 pid1;
-
-sync_printf("\n[Cascading Termination Testcase]\n");
-//resume(create((void *)test1, 8192, 50, "test1", 1));
-
 
 #ifdef TESTCASE1
         sync_printf("\n[TESTCASE-1]\n");

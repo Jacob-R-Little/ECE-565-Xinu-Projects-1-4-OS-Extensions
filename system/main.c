@@ -3,9 +3,13 @@
 #include <xinu.h>
 #include <stdarg.h>
 
-#define TESTCASE1
-#define TESTCASE2
-#define TESTCASE3
+//#define TESTCASE1
+//#define TESTCASE2
+//#define TESTCASE3
+
+process test1(void);
+process test2(uint32 n);
+
 
 uint32 sum(uint32 a, uint32 b){
 	return (a+b);
@@ -19,109 +23,88 @@ void sync_printf(char *fmt, ...)
 	restore(mask);
 }
 
+void sync_ps()
+{
+    	intmask mask = disable();
+	xsh_ps(1);
+	restore(mask);
+}
+
+void sync_print_pr_tree()
+{	
+		intmask mask = disable();
+	struct	procent	*prptr;		/* pointer to process		*/
+	uint32 i, j;
+
+	for (i = 0; i < NPROC; i++) {
+		prptr = &proctab[i];
+		if (prptr->prstate == PR_FREE) {  /* skip unused slots	*/
+			continue;
+		}
+		kprintf("- P%d:: ", i);
+		if (i != 0) {
+			for (j = 0; j < NPROC; j++) {
+				prptr = &proctab[j];
+				if ((uint32)(prptr->prparent) == i) {
+					kprintf("%d ", j);
+				}
+			}
+		}
+		kprintf("\n");
+	}
+	restore(mask);
+}
+
 process test1(){
 	
-	sync_printf("HELLO! I am process %d\n", currpid);
+	pid32 pid;
 
-	pid32 pid = fork();
-	if (pid == SYSERR)	
-		sync_printf("process %d:: fork failed\n",currpid);
-	else if (pid != NPROC){
-		sync_printf("process %d:: forked child %d\n", currpid, pid);
-		receive();
-	}
-
-	sync_printf("process %d:: pid=%d\n",currpid, pid);
-
-	sync_printf("GOODBYE! I am process %d\n", currpid);
+	pid = create((void *)test2, 8192, 50, "test2", 1, 4);
+	resume(pid);
+	sync_ps();
+	pid = create((void *)test2, 8192, 50, "test2", 1, 3);
+	resume(pid);
+	sync_ps();
+	pid = create((void *)test2, 8192, 50, "test2", 1, 6);
+	resume(pid);
+	sync_ps();
+	receive();
 
 	return OK;
 }
 
-process test2(){
-	uint32 i;
-	pid32 pid;
+process test2(uint32 n){
 	
-	sync_printf("HELLO! I am process %d\n", currpid);
+	pid32 pid;
 
-	for (i=0;i<3;i++){
-		pid = fork();
-		if (pid == SYSERR)	
-			sync_printf("process %d:: fork failed\n",currpid);
-		else if (pid != NPROC){
-			sync_printf("process %d:: forked child %d\n", currpid, pid);
-			receive();
-		}
+	for (;n > 0; n--) {
+		pid = create((void *)test2, 8192, 50, "test2", 1, 0);
+		resume(pid);
+		sync_ps();
 	}
 
-	sync_printf("GOODBYE! I am process %d\n", currpid);
+	receive();
 	
 	return OK;
 }
 
 process test3(int a, int b, int *c, int *d){
-	uint32 i;
-	pid32 pid;
-	int *v;
-
-	*c = a+b+currpid;	
-
-	for (i=0;i<3;i++){
-		pid = fork();
-		if (pid == SYSERR)	
-			sync_printf("process %d:: fork failed\n",currpid);
-		else if (pid != NPROC){
-			sync_printf("process %d:: forked child %d\n", currpid, pid);
-			receive();
-		}
-	}
-
-	v = (int *)getmem(4);
-
-	*d = *d + currpid;
-
-	*v = pid;
-
-	sync_printf("process %d:: c=0x%x, *c=%d, d=0x%x, *d=%d, *v=%d\n", currpid, 
-				c, *c, d, *d, *v);
-	
 	return OK;
 }
 
 process	main(void)
 {
 
-pid32 pid1;
+	pid32 pid;
 
-#ifdef TESTCASE1
-        sync_printf("\n[TESTCASE-1]\n");
-        pid1 = create((void *)test1, 8192, 50, "test1", 1);
-        resume(pid1);
-        receive();
-        sync_printf("[END-TESTCASE-1]\n\n");
-#endif
-
-
-#ifdef TESTCASE2
-	sync_printf("\n[TESTCASE-2]\n");
-        pid1 = create((void *)test2, 8192, 50, "test2", 1);
-        resume(pid1);
+	sync_printf("\n[CASCADING TERMINATION TESTCASE]\n");
+	pid = create((void *)test1, 8192, 50, "test1", 0);
+	resume(pid);
+	sync_ps();
+	sync_print_pr_tree();
 	receive();
-	sync_printf("[END-TESTCASE-2]\n\n");
-#endif
-	
-#ifdef TESTCASE3
-
-	int c=0;
-	int d=0;
-
-	sync_printf("\n[TESTCASE-3]\n");
-        pid1 = create((void *)test3, 8192, 50, "test3", 4, 1, 10, &c, &d);
-        resume(pid1);
-	receive();
-	sync_printf("[END-TESTCASE-3]\n\n");
-#endif
-	
+	sync_printf("\n[END-TESTCASE]\n");
+		
 	return OK;
     
 }
