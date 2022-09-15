@@ -61,6 +61,13 @@ pid32	create(
 
 	prptr->user_process = FALSE;
 
+	if (!strcmp((&proctab[prptr->prparent])->prname, "Main process")) {
+		prptr->user_process = TRUE;
+	}
+	else {
+		prptr->user_process = (&proctab[prptr->prparent])->user_process;
+	}
+
 	/* Initialize stack as if the process was called		*/
 
 	*saddr = STACKMAGIC;

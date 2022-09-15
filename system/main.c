@@ -28,11 +28,39 @@ void sync_ps()
 	restore(mask);
 }
 
+void sync_print_process_flag()
+{	
+	struct	procent	*prptr;		/* pointer to process		*/
+	uint32 i;
+
+    	intmask mask = disable();
+	
+	kprintf("--------------------------------\n");
+
+	for (i = 0; i < NPROC; i++) {
+		prptr = &proctab[i];
+		if (prptr->prstate == PR_FREE) {  /* skip unused slots	*/
+			continue;
+		}
+		if (prptr->user_process) {
+			kprintf("- P%d:: USER\n", i);
+		}
+		else {
+			kprintf("- P%d:: SYSTEM\n", i);
+		}
+	}
+
+	kprintf("--------------------------------\n");
+
+	restore(mask);
+}
+
 void sync_print_pr_tree()
 {	
-		intmask mask = disable();
 	struct	procent	*prptr;		/* pointer to process		*/
 	uint32 i, j;
+
+		intmask mask = disable();
 
 	kprintf("--------------------------------\n");
 
@@ -50,23 +78,23 @@ void sync_print_pr_tree()
 		}
 		kprintf("\n");
 	}
+
+	kprintf("--------------------------------\n");
+
 	restore(mask);
 }
 
 process test1(){
 
 	pid1 = create((void *)test2, 8192, 50, "test2", 1, 4);
-	(&proctab[pid1])->user_process = TRUE;
-	sync_print_pr_tree();
 	resume(pid1);
+
 	pid2 = create((void *)test2, 8192, 50, "test2", 1, 3);
-	(&proctab[pid2])->user_process = TRUE;
-	sync_print_pr_tree();
 	resume(pid2);
+
 	pid3 = create((void *)test2, 8192, 50, "test2", 1, 6);
-	(&proctab[pid3])->user_process = TRUE;
-	sync_print_pr_tree();
 	resume(pid3);
+
 	sleep(10);
 
 	return OK;
@@ -78,8 +106,6 @@ process test2(uint32 n){
 
 	for (;n > 0; n--) {
 		pid = create((void *)test2, 8192, 50, "test2", 1, 0);
-		(&proctab[pid])->user_process = TRUE;
-		sync_print_pr_tree();
 		resume(pid);
 	}
 
@@ -102,24 +128,28 @@ process	main(void)
 	sync_printf("\n[CASCADING TERMINATION TESTCASE]\n");
 
 	pid = create((void *)test1, 8192, 50, "test1", 0);
-	(&proctab[pid])->user_process = TRUE;
-	sync_print_pr_tree();
 	resume(pid);
 
+	sync_printf("\n[Process Flags (SYSTEM/USER)]\n");
+	sync_print_process_flag();
+
+	sync_printf("\n[Process Tree before killing]\n");
+	sync_print_pr_tree();
+
 	/* kill a process with no children */
+	sync_printf("\n[Kill process %d]\n[This process HAS NO children]\n", pid3+1);
 	kill(pid3+1);
 	sync_print_pr_tree();
-	sync_ps();
 
 	/* kill a process with children */
+	sync_printf("\n[Kill process %d]\n[This process HAS children]\n", pid2);
 	kill(pid2);
 	sync_print_pr_tree();
-	sync_ps();
 
 	/* kill a process with children and grandchildren*/
+	sync_printf("\n[Kill process %d]\n[This process HAS children AND grandchildren]\n", pid);
 	kill(pid);
 	sync_print_pr_tree();
-	sync_ps();
 
 	sync_printf("\n[END-TESTCASE]\n");
 		
