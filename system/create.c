@@ -57,13 +57,13 @@ pid32	create(
 
 	prptr->prtime = ctr1000;
 
-	/* Set user process flag false */
+	/* Set user process flag */
 
-	prptr->user_process = FALSE;
-
+	/* if parent is main process, process flag is USER */
 	if (!strcmp((&proctab[prptr->prparent])->prname, "Main process")) {
-		prptr->user_process = TRUE;
+		prptr->user_process = TRUE;	/* USER */
 	}
+	/* Otherwise, set process flag equal to parent's process flag */
 	else {
 		prptr->user_process = (&proctab[prptr->prparent])->user_process;
 	}

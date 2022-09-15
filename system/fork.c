@@ -67,9 +67,10 @@ pid32	fork(void)
 
 	prptr->prtime = ctr1000;
 
-	/* Set user process flag false */
+	/* Set user process flag */
+	/* Cascading Termination conflicts with fork so set process to SYSTEM to be safe */
 
-	prptr->user_process = FALSE;
+	prptr->user_process = FALSE;	/* SYSTEM */
 
 	/* Initialize stack as if the process was called		*/
 
@@ -103,15 +104,6 @@ pid32	fork(void)
 		prev_parent_bp = parent_bp;
 		parent_bp = *parent_bp;
 	}
-
-	/* Update the initial stack frame */
-	
-	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 1*sizeof(uint32))
-		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 1*sizeof(uint32))) + stack_offset;
-	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 7*sizeof(uint32))
-		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 7*sizeof(uint32))) + stack_offset;
-	*(uint32 *)((uint32)prev_parent_bp + stack_offset - 8*sizeof(uint32))
-		= (uint32)(*(uint32 *)((uint32)prev_parent_bp - 8*sizeof(uint32))) + stack_offset;
 
 	/* The following entries on the stack must match what ctxsw	*/
 	/*   expects a saved process state to contain: ret address,	*/
