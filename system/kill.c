@@ -14,7 +14,17 @@ syscall	kill(
 	struct	procent *prptr;		/* Ptr to process's table entry	*/
 	int32	i;			/* Index into descriptors	*/
 
+	if ((&proctab[pid])->user_process == TRUE) {
+		for (i = 0; i < NPROC; i++) {
+			prptr = &proctab[i];
+			if ((prptr->prstate != PR_FREE) && ((uint32)(prptr->prparent) == pid)) {
+				kill(i);
+			}
+		}
+	}
+	
 	mask = disable();
+
 	if (isbadpid(pid) || (pid == NULLPROC)
 	    || ((prptr = &proctab[pid])->prstate) == PR_FREE) {
 		restore(mask);
@@ -55,5 +65,6 @@ syscall	kill(
 	}
 
 	restore(mask);
+
 	return OK;
 }

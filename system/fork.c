@@ -67,6 +67,10 @@ pid32	fork(void)
 
 	prptr->prtime = ctr1000;
 
+	/* Set user process flag false */
+
+	prptr->user_process = FALSE;
+
 	/* Initialize stack as if the process was called		*/
 
 	*saddr = STACKMAGIC;

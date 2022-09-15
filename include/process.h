@@ -53,6 +53,7 @@ struct procent {		/* Entry in the process table		*/
 	bool8	prhasmsg;	/* Nonzero iff msg is valid		*/
 	int16	prdesc[NDESC];	/* Device descriptors for process	*/
 	uint32	prtime;		/* Time at which process was created*/
+	bool8	user_process;	/* Flag for user processes	*/
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/
