@@ -1,0 +1,69 @@
+=== TESTCASE 1::  1 process - context switches =================
+ctxsw::4-5
+ctxsw::5-4
+ctxsw::4-5
+ctxsw::5-0
+ctxsw::0-4
+
+process 5:: runtime=100, turnaround time=101, ctx=2
+================================================================
+
+=== TESTCASE 2::  2 processes - context switches ===============
+ctxsw::4-6
+ctxsw::6-7
+ctxsw::7-6
+ctxsw::6-7
+ctxsw::7-6
+ctxsw::6-7
+ctxsw::7-6
+ctxsw::6-7
+ctxsw::7-6
+ctxsw::6-7
+ctxsw::7-6
+ctxsw::6-4
+ctxsw::4-6
+ctxsw::6-7
+ctxsw::7-4
+ctxsw::4-7
+ctxsw::7-0
+ctxsw::0-4
+
+process 6:: runtime=100, turnaround time=191, ctx=7
+process 7:: runtime=100, turnaround time=202, ctx=7
+================================================================
+
+=== TESTCASE 3::  3 processes - context switches ===============
+ctxsw::4-8
+ctxsw::8-9
+ctxsw::9-8
+ctxsw::8-4
+ctxsw::4-8
+ctxsw::8-10
+ctxsw::10-8
+ctxsw::8-9
+ctxsw::9-10
+ctxsw::10-8
+ctxsw::8-10
+ctxsw::10-8
+ctxsw::8-9
+ctxsw::9-8
+ctxsw::8-10
+ctxsw::10-4
+ctxsw::4-9
+ctxsw::9-10
+ctxsw::10-9
+ctxsw::9-8
+ctxsw::8-9
+ctxsw::9-8
+ctxsw::8-4
+ctxsw::4-8
+ctxsw::8-9
+ctxsw::9-4
+ctxsw::4-9
+ctxsw::9-0
+ctxsw::0-4
+
+process 8:: runtime=100, turnaround time=234, ctx=10
+process 9:: runtime=100, turnaround time=245, ctx=8
+process 10:: runtime=40, turnaround time=181, ctx=5
+================================================================

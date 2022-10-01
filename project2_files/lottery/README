@@ -1,0 +1,36 @@
+SETTINGS: For all the test cases QUANTUM must be set to 10 (kernel.h) 
+
+RECOMMENDATION: Use the test case files in the following order
+
+(1) lottery_ctxsw
+=======================
+Tests the sequence of context switches on short running, CPU-intensive processes. Constant DEBUG_CTXSW must be defined.
+
+(2) lottery_burst_ctxsw
+=======================
+Tests the sequence of context switches on short running processes exhibiting burst execution. Constant DEBUG_CTXSW must be defined.
+
+(3) lottery_counters
+=======================
+Tests the relative use of the CPU by various mixes of CPU-intensive processes.
+
+(4) lottery_longrunning
+=======================
+Performs tests on long running processes (only runtime, turnaround time and number of context switches are recorded).
+
+NOTE:
+
+- The lottery_ctxsw and lottery_burst_ctxsw test cases are only a debugging aid, and won't be used for grading.
+- The kill() function incurs preemption (due to the send/receive sequence). Therefore, you should measure the turnaround time when exiting (and not at the beginning) of the kill() function. 
+
+EXPECTED DEVIATIONS FROM TEST CASE RESULTS: 
+
+The test cases should help you debug your code. Keep in mind that the results can change slightly from run to run (and from system to system). Your output will be consider correct if coherent with the operation of lottery scheduling. 
+
+For example, the following differences typically do *not* indicate a problem in your code.
+
+- In test cases (3) the numbers shown represent percentage values. These percentage values are rounded. You can expect the results to change slightly from run to run.
+
+- In the other test cases, the runtimes and turnaround times might vary (by a couple of ms) from run to run. More significant differences *might* indicated a problem in your code, but a couple of ms can be expected.
+
+- On long running test cases, the number of context switches my vary slightly
