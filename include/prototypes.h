@@ -446,6 +446,7 @@ extern	interrupt	sdmcdispatch(void);
 extern	syscall	read(did32, char *, uint32);
 
 /* in file ready.c */
+extern	syscall print_ready_list();
 extern	status	ready(pid32);
 
 /* in file receive.c */

@@ -2,29 +2,24 @@
 
 #include <xinu.h>
 
+process test1(){
+	
+	kprintf("HELLO! I am process %d\n", getpid());
+
+	return OK;
+}
+
 process	main(void)
 {
-	pid32	shpid;		/* Shell process ID */
 
 	printf("\n\n");
 
-	/* Create a local file system on the RAM disk */
+	resume(create((void *)test1, 8192, 8, "test1", 0));
+	resume(create((void *)test1, 8192, 9, "test2", 0));
+	resume(create((void *)test1, 8192, 10, "test3", 0));
 
-	lfscreate(RAM0, 40, 20480);
+	xsh_ps(1);
+	print_ready_list();
 
-	/* Run the Xinu shell */
-
-	recvclr();
-	resume(shpid = create(shell, 8192, 50, "shell", 1, CONSOLE));
-
-	/* Wait for shell to exit and recreate it */
-
-	while (TRUE) {
-	    if (receive() == shpid) {
-		sleepms(200);
-		kprintf("\n\nMain process recreating shell\n\n");
-		resume(shpid = create(shell, 4096, 20, "shell", 1, CONSOLE));
-	    }
-	}
 	return OK;
 }

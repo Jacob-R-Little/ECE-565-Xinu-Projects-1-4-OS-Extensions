@@ -12,7 +12,7 @@ This report discusses the implementation of Lottery Scheduling and Multi-Level F
 
 ## Question Answers
 
-**Q1.** The `readylist` is a queue that holds the process that are in the `PR_READY` state. They are ordered by priority (highest priority first) making it easy to compare and remove the highest priority processes first during scheduling. The `readylist` is referenced in `sysinit()` where it is first initialized, in `ready()` where it is used when a process enters the `PR_READY` state, and in `resched()` where it is used for comparing the currently running processes priority against the first item in the `readylist` and also for swapping the currently running process and the first item in the `readylist` when a higher priority process is in the `readylist`.
+**Q1.** The `readylist` is a queue that holds the processes that are in the `PR_READY` state. They are ordered by priority (highest priority first) making it easy to compare and remove the highest priority processes first during scheduling. The `readylist` is referenced in `sysinit()` where it is first initialized, in `ready()` where it is used when a process enters the `PR_READY` state, and in `resched()` where it is used for comparing the currently running processes priority against the first item in the `readylist` and also for swapping the currently running process and the first item in the `readylist` when a higher priority process is in the `readylist`.
 
 **Q2.** Xinu uses a priority based round-robin scheduling policy. This policy can lead to process starvation in the event that higher priority processes keep taking up all the runtime and never give a lower priority process the chance to execute because it will always be neglected for higher priority processes.
 
