@@ -61,6 +61,10 @@ pid32	create(
 	prptr->turnaroundtime = 0;
 	prptr->num_ctxsw = 0;
 
+	/* Initialize process as SYSTEM	*/
+
+	prptr->user_process = SYSTEM;
+
 	/* Initialize stack as if the process was called		*/
 
 	*saddr = STACKMAGIC;
@@ -102,6 +106,26 @@ pid32	create(
 	restore(mask);
 	return pid;
 }
+
+pid32	create_user_process(
+	  void		*funcaddr,	/* Address of the function	*/
+	  uint32	ssize,		/* Stack size in bytes		*/
+	  char		*name,		/* Name (for debugging)		*/
+	  uint32	nargs,		/* Number of args that follow	*/
+	  ...
+	)
+{
+	pid32 pid;
+	intmask mask = disable();
+
+	pid = create(funcaddr, ssize, INITPRIO, name, nargs);
+	proctab[pid].user_process = USER;
+
+	restore(mask);
+	return pid;
+}
+
+
 
 /*------------------------------------------------------------------------
  *  newpid  -  Obtain a new (free) process ID

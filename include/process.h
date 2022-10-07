@@ -38,6 +38,11 @@
 
 #define NDESC		5	/* must be odd to make procent 4N bytes	*/
 
+/* Process flags for user and system processes	*/
+
+#define USER		1
+#define SYSTEM		0
+
 /* Definition of the process table (multiple of 32 bits) */
 
 struct procent {		/* Entry in the process table		*/
@@ -55,6 +60,7 @@ struct procent {		/* Entry in the process table		*/
 	uint32	runtime;	/* number of milliseconds the process has been running	*/
 	uint32	turnaroundtime;	/* turnaround time in milliseconds	*/
 	uint32	num_ctxsw;	/* number of context switch operations to the process	*/
+	bool8 user_process;
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/
