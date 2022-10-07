@@ -20,6 +20,9 @@ extern	status	ascdate(uint32, char *);
 /* in file bufinit.c */
 extern	status	bufinit(void);
 
+/* in file bufinit.c */
+extern	void	burst_execution(uint32, uint32, uint32);
+
 /* in file chprio.c */
 extern	pri16	chprio(pid32, pri16);
 

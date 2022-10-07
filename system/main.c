@@ -77,7 +77,8 @@ process	main(void)
 	print_process_stats();
 	print_process_flag();
 
-	
+	resume(create_user_process(burst_execution, 8192, "burst_test", 3, 4, 1000, 1000));
+	receive();
 
 	return OK;
 }
