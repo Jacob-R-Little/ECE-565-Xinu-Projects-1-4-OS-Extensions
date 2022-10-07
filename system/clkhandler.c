@@ -9,8 +9,8 @@
 void	clkhandler()
 {
 	static	uint32	count1000 = 1000;	/* Count to 1000 ms	*/
-	qid16 	next = firstid(readylist);
-	qid16 	tail = queuetail(readylist);
+	struct	procent	*prptr;		/* pointer to process		*/
+	uint32 i;
 
 	/* Decrement the ms counter, and see if a second has passed */
 
@@ -38,11 +38,13 @@ void	clkhandler()
 	}
 
 	proctab[currpid].runtime++;
-	proctab[currpid].turnaroundtime++;
 
-	while(next != tail) {
-		proctab[next].turnaroundtime++;
-		next = queuetab[next].qnext;
+	for (i = 0; i < NPROC; i++) {
+		prptr = &proctab[i];
+		if (prptr->prstate == PR_FREE) {  /* skip unused slots	*/
+			continue;
+		}
+		prptr->turnaroundtime++;
 	}
 
 	/* Decrement the preemption counter, and reschedule when the */
