@@ -55,6 +55,12 @@ pid32	create(
 	prptr->prdesc[1] = CONSOLE;
 	prptr->prdesc[2] = CONSOLE;
 
+	/* Initialize process execution statistics	*/
+
+	prptr->runtime = 0;
+	prptr->turnaroundtime = 0;
+	prptr->num_ctxsw = 0;
+
 	/* Initialize stack as if the process was called		*/
 
 	*saddr = STACKMAGIC;

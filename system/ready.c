@@ -11,11 +11,10 @@ qid16	readylist;			/* Index of ready list		*/
 
 syscall print_ready_list()
 {
-	qid16	next, tail;		/* Tail & previous node indexes	*/
 	intmask mask = disable();	/* Interrupt mask		*/
-
-	next = firstid(readylist);
-	tail = queuetail(readylist);
+	qid16	next = firstid(readylist);
+	qid16	tail = queuetail(readylist);
+	
 
 	kprintf("\n\n---READYLIST---\n");
 

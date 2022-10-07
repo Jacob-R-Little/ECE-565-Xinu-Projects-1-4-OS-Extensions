@@ -9,6 +9,8 @@
 void	clkhandler()
 {
 	static	uint32	count1000 = 1000;	/* Count to 1000 ms	*/
+	qid16 	next = firstid(readylist);
+	qid16 	tail = queuetail(readylist);
 
 	/* Decrement the ms counter, and see if a second has passed */
 
@@ -33,6 +35,14 @@ void	clkhandler()
 		if((--queuetab[firstid(sleepq)].qkey) <= 0) {
 			wakeup();
 		}
+	}
+
+	proctab[currpid].runtime++;
+	proctab[currpid].turnaroundtime++;
+
+	while(next != tail) {
+		proctab[next].turnaroundtime++;
+		next = queuetab[next].qnext;
 	}
 
 	/* Decrement the preemption counter, and reschedule when the */
