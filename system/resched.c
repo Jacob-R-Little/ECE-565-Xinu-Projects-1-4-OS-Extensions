@@ -2,7 +2,7 @@
 
 #include <xinu.h>
 
-#define DEBUG_CTXSW
+//#define DEBUG_CTXSW
 
 struct	defer	Defer;
 
@@ -30,11 +30,17 @@ pid32	lottery(void)
 	next = firstid(lotterylist);
 	winner = rand() % total_tickets;
 
+	//kprintf("  Win: %d / %d | Count:", winner, total_tickets);
+
 	while (next != tail) {	// determine the winner
 		counter += queuetab[next].qkey;
 
-		if (counter > winner)
+		//kprintf("%d, ", counter);
+
+		if (counter > winner) {
+			//kprintf("| Proc: %d\n", next);
 			return getitem(next);
+		}
 
 		next = queuetab[next].qnext;
 	}
@@ -73,6 +79,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 					return;
 			}
 			else {
+				insert(currpid, lotterylist, ptold->tickets);
 				currpid = dequeue(readylist);
 			}
 			
@@ -98,7 +105,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 				if ((firstid(readylist) == NULLPROC) && nonempty(lotterylist))
 					currpid = lottery();
 				else
-					currpid = dequeue(lotterylist);
+					currpid = dequeue(readylist);
 			}
 		}
 	}
@@ -106,7 +113,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		if ((firstid(readylist) == NULLPROC) && nonempty(lotterylist))
 			currpid = lottery();
 		else
-			currpid = dequeue(lotterylist);
+			currpid = dequeue(readylist);
 	}
 
 	/* Force context switch to highest priority ready process */
