@@ -2,13 +2,9 @@
 
 #include <xinu.h>
 
-//#define DEBUG_CTXSW
+#define DEBUG_CTXSW
 
 struct	defer	Defer;
-
-void set_tickets(pid32 pid, uint32 tickets) {
-	proctab[pid].tickets = tickets;
-}
 
 pid32	lottery(void)
 {

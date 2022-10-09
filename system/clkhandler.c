@@ -43,14 +43,6 @@ void	clkhandler()
 
 	proctab[currpid].runtime++;
 
-	for (i = 0; i < NPROC; i++) {
-		prptr = &proctab[i];
-		if (prptr->prstate == PR_FREE) {  /* skip unused slots	*/
-			continue;
-		}
-		prptr->turnaroundtime++;
-	}
-
 	/* Decrement the preemption counter, and reschedule when the */
 	/*   remaining time reaches zero			     */
 

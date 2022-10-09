@@ -1,83 +1,145 @@
 #include <xinu.h>
 #include <stdio.h>
 
-void timed_execution(uint32 runtime){
-	    while(proctab[currpid].runtime<runtime);
+pid32 prA, prB, prC, prD;
+uint32 a_cnt, b_cnt, c_cnt, d_cnt;
+
+void compute(uint32 runtime, uint32 *value)
+{   
+        int i;
+        while (proctab[currpid].runtime<runtime) {
+            for (i = 0; i < 1000; i++)
+                ;
+            (*value)++;
+        }
 }
 
 int main() {
-	pid32 prA, prB, prC, prD;
 
-	kprintf("\n");
+	double total_cnt, a_percent, b_percent, c_percent, d_percent;
 	
-	kprintf("=== TESTCASE 1::  CPU-intensive jobs =============================\n");
-
-	prA = create_user_process(timed_execution, 1024, "timed_execution", 1, 10000);
-	prB = create_user_process(timed_execution, 1024, "timed_execution", 1, 10000);
-	prC = create_user_process(timed_execution, 1024, "timed_execution", 1, 10000);
-
-	set_tickets(prA, 50);
-	set_tickets(prB, 50);
-	set_tickets(prC, 0);
+	a_cnt = b_cnt = c_cnt = d_cnt = 0;	
 	
+	kprintf("\n\n================= TESTCASE 1: 2 processes ======================\n");
+	total_cnt=0;
+	a_percent=0;
+	b_percent=0;
+	prA = create_user_process(compute, 1024, "process A", 2, 10000, &a_cnt);
+	prB = create_user_process(compute, 1024, "process B", 2, 10000, &b_cnt);
+	set_tickets(prA, 1000);
+	set_tickets(prB, 1000);
 	resume(prA);
 	resume(prB);
-	resume(prC);
+	sleepms(4000);
+	kill(prA);
+	kill(prB);
+	total_cnt = a_cnt + b_cnt ;
+	a_percent = (double) a_cnt / total_cnt * 100;
+	b_percent = (double) b_cnt / total_cnt * 100;
+	kprintf("Test RESULT: A : B (%d : %d)\n", (int) a_percent, (int) b_percent);
 
-	receive();	
-	receive();	
-
-	sleepms(50); // wait for user processes to terminate	
-
-	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prA, proctab[prA].runtime, proctab[prA].turnaroundtime, proctab[prA].num_ctxsw);
-	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prB, proctab[prB].runtime, proctab[prB].turnaroundtime, proctab[prB].num_ctxsw);
-	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prC, proctab[prC].runtime, proctab[prC].turnaroundtime, proctab[prC].num_ctxsw);
-
-	set_tickets(prC,1);
 	
-	receive();	
-   
-	sleepms(20); // wait for user processes to terminate	
+	a_cnt = b_cnt = c_cnt = d_cnt = 0;	
+	kprintf("\n\n================= TESTCASE 2: 2 processes ======================\n");
+	total_cnt=0;
+	a_percent=0;
+	b_percent=0;
+	prA = create_user_process(compute, 1024, "process A", 2, 10000, &a_cnt);
+	prB = create_user_process(compute, 1024, "process B", 2, 10000, &b_cnt);
+	set_tickets(prA, 1000);
+	set_tickets(prB, 0);
+	resume(prA);
+	resume(prB);
+	sleepms(4000);
+	kill(prA);
+	kill(prB);
+	total_cnt = a_cnt + b_cnt ;
+	a_percent = (double) a_cnt / total_cnt * 100;
+	b_percent = (double) b_cnt / total_cnt * 100;
+	kprintf("Test RESULT: A : B (%d : %d)\n", (int) a_percent, (int) b_percent);
  
-	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prC, proctab[prC].runtime, proctab[prC].turnaroundtime, proctab[prC].num_ctxsw);
-
-	prD = create_user_process(timed_execution, 1024, "timed_execution", 1, 10000);
-	set_tickets(prD,1);
-	resume(prD);
 	
-	receive();	
+	a_cnt = b_cnt = c_cnt = d_cnt = 0;	
+	kprintf("\n\n================= TESTCASE 3: 2 processes ======================\n");
+	total_cnt=0;
+	a_percent=0;
+	b_percent=0;
+	prA = create_user_process(compute, 1024, "process A", 2, 10000, &a_cnt);
+	prB = create_user_process(compute, 1024, "process B", 2, 1000, &b_cnt);
+	set_tickets(prA, 1000);
+	set_tickets(prB, 1000);
+	resume(prA);
+	resume(prB);
+	sleepms(4000);
+	kill(prA);
+	kill(prB);
+	total_cnt = a_cnt + b_cnt ;
+	a_percent = (double) a_cnt / total_cnt * 100;
+	b_percent = (double) b_cnt / total_cnt * 100;
+	kprintf("Test RESULT: A : B (%d : %d)\n", (int) a_percent, (int) b_percent);
+
 	
-	sleepms(20); // wait for user processes to terminate	
-	
-	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prD, proctab[prD].runtime, proctab[prD].turnaroundtime, proctab[prD].num_ctxsw);
-
-	kprintf("==================================================================\n\n");
-
-	kprintf("=== TESTCASE 2::  interactive jobs ===============================\n");
-
-	prA = create_user_process(burst_execution, 1024, "burst_execution", 3, 10, 500, 500);
-	prB = create_user_process(burst_execution, 1024, "burst_execution", 3, 10, 500, 500);
-	prC = create_user_process(burst_execution, 1024, "burst_execution", 3, 10, 500, 500);
-
-	set_tickets(prA, 80);
-	set_tickets(prB, 10);
-	set_tickets(prC, 10);
-	
+	a_cnt = b_cnt = c_cnt = d_cnt = 0;	
+	kprintf("\n\n================= TESTCASE 4: 4 processes ======================\n");
+	total_cnt=0;
+	a_percent=0;
+	b_percent=0;
+	a_cnt=b_cnt=0;
+	prA = create_user_process(compute, 1024, "process A", 2, 10000, &a_cnt);
+	prB = create_user_process(compute, 1024, "process B", 2, 10000, &b_cnt);
+	prC = create_user_process(compute, 1024, "process C", 2, 10000, &c_cnt);
+	prD = create_user_process(compute, 1024, "process D", 2, 10000, &d_cnt);
+	set_tickets(prA, 2000);
+	set_tickets(prB, 1000);
+	set_tickets(prC, 500);
+	set_tickets(prD, 250);
 	resume(prA);
 	resume(prB);
 	resume(prC);
+	resume(prD);
+	sleepms(8000);
+	kill(prA);
+	kill(prB);
+	kill(prC);
+	kill(prD);
+	total_cnt = a_cnt + b_cnt + c_cnt + d_cnt;
+	a_percent = (double) a_cnt / total_cnt * 100;
+	b_percent = (double) b_cnt / total_cnt * 100;
+	c_percent = (double) c_cnt / total_cnt * 100;
+	d_percent = (double) d_cnt / total_cnt * 100;
+	kprintf("Test RESULT: A : B : C : D (%d : %d : %d : %d)\n",
+	        (int) a_percent, (int) b_percent, (int) c_percent, (int) d_percent);
 
-	receive();	
-	receive();	
-	receive();	
 
-	sleepms(50); // wait for user processes to terminate	
-
-	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prA, proctab[prA].runtime, proctab[prA].turnaroundtime, proctab[prA].num_ctxsw);
-	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prB, proctab[prB].runtime, proctab[prB].turnaroundtime, proctab[prB].num_ctxsw);
-	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prC, proctab[prC].runtime, proctab[prC].turnaroundtime, proctab[prC].num_ctxsw);
-
-	kprintf("==================================================================\n\n");
+	a_cnt = b_cnt = c_cnt = d_cnt = 0;	
+	kprintf("\n\n================= TESTCASE 5: 4 processes ======================\n");
+	total_cnt=0;
+	a_percent=0;
+	b_percent=0;
+	a_cnt=b_cnt=0;
+	prA = create_user_process(compute, 1024, "process A", 2, 10000, &a_cnt);
+	prB = create_user_process(compute, 1024, "process B", 2, 10000, &b_cnt);
+	set_tickets(prA, 1000);
+	set_tickets(prB, 1000);
+	resume(prA);
+	resume(prB);
+	sleepms(4000);
+	prC = create_user_process(compute, 1024, "process C", 2, 10000, &c_cnt);
+	prD = create_user_process(compute, 1024, "process D", 2, 10000, &d_cnt);
+	set_tickets(prC, 1000);
+	set_tickets(prD, 1000);
+	resume(prC);
+	resume(prD);
+	sleepms(4000);
+	kill(prC);
+	kill(prD);
+	total_cnt = a_cnt + b_cnt + c_cnt + d_cnt;
+	a_percent = (double) a_cnt / total_cnt * 100;
+	b_percent = (double) b_cnt / total_cnt * 100;
+	c_percent = (double) c_cnt / total_cnt * 100;
+	d_percent = (double) d_cnt / total_cnt * 100;
+	kprintf("Test RESULT: A : B : C : D (%d : %d : %d : %d)\n",
+	        (int) a_percent, (int) b_percent, (int) c_percent, (int) d_percent);
 
 	return OK;
 }

@@ -57,6 +57,7 @@ pid32	create(
 
 	/* Initialize process execution statistics	*/
 
+	prptr->creationtime = ctr1000;
 	prptr->runtime = 0;
 	prptr->turnaroundtime = 0;
 	prptr->num_ctxsw = 0;
@@ -162,6 +163,7 @@ pid32	create_user_process(
 
 	/* Initialize process execution statistics	*/
 
+	prptr->creationtime = ctr1000;
 	prptr->runtime = 0;
 	prptr->turnaroundtime = 0;
 	prptr->num_ctxsw = 0;
@@ -214,6 +216,20 @@ pid32	create_user_process(
 	*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
 	restore(mask);
 	return pid;
+}
+
+
+
+void set_tickets(pid32 pid, uint32 tickets) {
+	struct procent *prptr = &proctab[pid];
+	uint32 oldtickets = prptr->tickets;
+
+	prptr->tickets = tickets;
+	// if (!oldtickets && tickets && (prptr->prstate == PR_READY))
+	// 	insert(pid, lotterylist, prptr->tickets);
+	// else if (oldtickets && !tickets && (prptr->prstate == PR_READY))
+	// 	getitem(pid);
+
 }
 
 

@@ -45,8 +45,10 @@ status	ready(
 
 	prptr = &proctab[pid];
 	prptr->prstate = PR_READY;
-	if (prptr->user_process == USER)
-		insert(pid, lotterylist, prptr->tickets);
+	if (prptr->user_process == USER) {
+		// if (prptr->tickets)
+			insert(pid, lotterylist, prptr->tickets);
+	}
 	else
 		insert(pid, readylist, prptr->prprio);
 
