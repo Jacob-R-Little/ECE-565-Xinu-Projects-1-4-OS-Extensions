@@ -1,84 +1,40 @@
-/*  main.c  - main */
-
 #include <xinu.h>
+#include <stdio.h>
 
-void print_process_flag()
-{	
-	struct	procent	*prptr;		/* pointer to process		*/
-	uint32 i;
-	intmask mask = disable();
-	
-	kprintf("---Process Flags---\n");
-
-	for (i = 0; i < NPROC; i++) {
-		prptr = &proctab[i];
-		if (prptr->prstate == PR_FREE) {  /* skip unused slots	*/
-			continue;
-		}
-		if (prptr->user_process) {
-			kprintf("P%d:: USER\n", i);
-		}
-		else {
-			kprintf("P%d:: SYSTEM\n", i);
-		}
-	}
-
-	kprintf("-------------------\n");
-
-	restore(mask);
-}
-
-void print_process_stats()
-{	
-	struct	procent	*prptr;		/* pointer to process		*/
-	uint32 i;
-	intmask mask = disable();
-	
-	kprintf("---Process Statistics---\n");
-
-	for (i = 0; i < NPROC; i++) {
-		prptr = &proctab[i];
-		if (prptr->prstate == PR_FREE) {  /* skip unused slots	*/
-			continue;
-		}
-		kprintf("P%d:\n", i);
-		kprintf("Runtime: %d ms\n", prptr->runtime);
-		kprintf("Turn around time: %d ms\n", prptr->turnaroundtime);
-		kprintf("# of Context Switches: %d\n", prptr->num_ctxsw);
-	}
-
-	kprintf("------------------------\n");
-
-	restore(mask);
-}
-
-process test1(){
-	
-	kprintf("HELLO! I am process %d\n", getpid());
-
-	sleep(10);
-
-	return OK;
-}
-
-process	main(void)
+void sync_printf(char *fmt, ...)
 {
-	uint32 i;
-	uint32 time_capture = clktime;
+        intmask mask = disable();
+        void *arg = __builtin_apply_args();
+        __builtin_apply((void*)kprintf, arg, 100);
+        restore(mask);
+}
 
-	printf("\n\n");
+int main() {
+	pid32 prA, prB;
 
-	resume(create_user_process((void *)test1, 8192, "test1", 0));
-	resume(create_user_process((void *)test1, 8192, "test2", 0));
-	resume(create_user_process((void *)test1, 8192, "test3", 0));
-
-	xsh_ps(1);
-	print_ready_list();
-	print_process_stats();
-	print_process_flag();
-
-	resume(create_user_process(burst_execution, 8192, "burst_test", 3, 4, 1000, 1000));
+	sync_printf("\n");
+	sync_printf("=== TESTCASE 1:: 1 process with burst execution - context switches ======\n");	
+	prA = create_user_process(burst_execution, 1024, "burst_execution", 3, 4, 40, 40);
+	set_tickets(prA, 50);
+	resume(prA);
 	receive();
+	sleepms(20); //wait for user process to terminate	
+	kprintf("\nprocess %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prA, proctab[prA].runtime, proctab[prA].turnaroundtime, proctab[prA].num_ctxsw);
+	sync_printf("=========================================================================\n\n");	
 
+	sync_printf("=== TESTCASE 2::  2 processes with burst execution - context switches ===\n");	
+	prA = create_user_process(burst_execution, 1024, "burst_execution", 3, 4, 40, 40);
+	prB = create_user_process(burst_execution, 1024, "burst_execution", 3, 4, 40, 40);
+	set_tickets(prA, 90);
+	set_tickets(prB, 10);
+	resume(prA);
+	resume(prB);
+	receive();
+	receive();
+	sleepms(50); //wait for user processes to terminate	
+	kprintf("\nprocess %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prA, proctab[prA].runtime, proctab[prA].turnaroundtime, proctab[prA].num_ctxsw);
+	kprintf("process %d:: runtime=%d, turnaround time=%d, ctx=%d\n",prB, proctab[prB].runtime, proctab[prB].turnaroundtime, proctab[prB].num_ctxsw);
+	sync_printf("=========================================================================\n\n");	
+	
 	return OK;
 }

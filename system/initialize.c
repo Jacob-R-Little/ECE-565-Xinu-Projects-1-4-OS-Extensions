@@ -23,7 +23,8 @@ struct	memblk	memlist;	/* List of free memory blocks		*/
 
 /* Active system status */
 
-int	prcount;		/* Total number of live processes	*/
+int		prcount;		/* Total number of live processes	*/
+int		userprcount;	/* Total number of live USER processes	*/
 pid32	currpid;		/* ID of currently executing process	*/
 
 /* Control sequence to reset the console colors and cusor positiion	*/
@@ -168,6 +169,10 @@ static	void	sysinit()
 
 	prcount = 1;
 
+	/* No user process at startup	*/
+
+	userprcount = 0;
+
 	/* Scheduling is not currently blocked */
 
 	Defer.ndefers = 0;
@@ -191,6 +196,11 @@ static	void	sysinit()
 	prptr->prstkbase = getstk(NULLSTK);
 	prptr->prstklen = NULLSTK;
 	prptr->prstkptr = 0;
+	prptr->runtime = 0;
+	prptr->turnaroundtime = 0;
+	prptr->num_ctxsw = 0;
+	prptr->user_process = SYSTEM;
+	prptr->tickets = 0;
 	currpid = NULLPROC;
 	
 	/* Initialize semaphores */
@@ -210,6 +220,9 @@ static	void	sysinit()
 
 	readylist = newqueue();
 
+	/* Create a lottery list for lottery processes */
+
+	lotterylist = newqueue();
 
 	/* initialize the PCI bus */
 

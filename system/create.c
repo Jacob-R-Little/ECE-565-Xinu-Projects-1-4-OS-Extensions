@@ -65,6 +65,10 @@ pid32	create(
 
 	prptr->user_process = SYSTEM;
 
+	/* Initialize zero tickets for SYSTEM process	*/
+
+	prptr->tickets = 0;
+
 	/* Initialize stack as if the process was called		*/
 
 	*saddr = STACKMAGIC;
@@ -136,11 +140,12 @@ pid32	create_user_process(
 	}
 
 	prcount++;
+	userprcount++;
 	prptr = &proctab[pid];
 
 	/* Initialize process table entry for new process */
 	prptr->prstate = PR_SUSP;	/* Initial state is suspended	*/
-	prptr->prprio = INITPRIO;
+	prptr->prprio = USERPRIO;
 	prptr->prstkbase = (char *)saddr;
 	prptr->prstklen = ssize;
 	prptr->prname[PNMLEN-1] = NULLCH;
@@ -164,6 +169,10 @@ pid32	create_user_process(
 	/* Initialize process as USER	*/
 
 	prptr->user_process = USER;
+
+	/* Initialize zero tickets	*/
+
+	prptr->tickets = 0;
 
 	/* Initialize stack as if the process was called		*/
 

@@ -21,6 +21,10 @@ syscall	kill(
 		return SYSERR;
 	}
 
+	if (prptr->user_process = USER) {
+		userprcount--;
+	}
+
 	if (--prcount <= 1) {		/* Last user process completes	*/
 		xdone();
 	}

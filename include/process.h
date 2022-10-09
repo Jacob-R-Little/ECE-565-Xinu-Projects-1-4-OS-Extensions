@@ -26,6 +26,7 @@
 
 #define	INITSTK		65536	/* Initial process stack size		*/
 #define	INITPRIO	20	/* Initial process priority		*/
+#define	USERPRIO	10	/* USER process priority	*/
 #define	INITRET		userret	/* Address to which process returns	*/
 
 /* Inline code to check process ID (assumes interrupts are disabled)	*/
@@ -60,7 +61,8 @@ struct procent {		/* Entry in the process table		*/
 	uint32	runtime;	/* number of milliseconds the process has been running	*/
 	uint32	turnaroundtime;	/* turnaround time in milliseconds	*/
 	uint32	num_ctxsw;	/* number of context switch operations to the process	*/
-	bool8 user_process;
+	bool8 	user_process;	/* flag to differentiate USER and SYSTEM processes	*/
+	uint32	tickets;	/*	number of tickets a USER process has (0 for SYSTEM proesses)	*/
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/
@@ -68,4 +70,5 @@ struct procent {		/* Entry in the process table		*/
 
 extern	struct	procent proctab[];
 extern	int32	prcount;	/* Currently active processes		*/
+extern	int32	userprcount;	/* Currently active USER processes		*/
 extern	pid32	currpid;	/* Currently executing process		*/
