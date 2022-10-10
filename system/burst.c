@@ -27,5 +27,4 @@ void burst_execution(
         sleepms(sleep_duration);
     }
 
-    return OK;
 }

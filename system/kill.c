@@ -25,7 +25,7 @@ syscall	kill(
 
 	prptr->turnaroundtime = ctr1000 - prptr->creationtime;
 
-	if (prptr->user_process = USER) {
+	if (prptr->user_process == USER) {
 		userprcount--;
 	}
 

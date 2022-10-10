@@ -2,12 +2,15 @@
 
 #include <xinu.h>
 
-#define DEBUG_CTXSW
+//#define DEBUG_CTXSW
+//#define	DEBUG_RESCHED
+//#define DEBUG_LOTTERY
 
 struct	defer	Defer;
 
 pid32	lottery(void)
 {
+	pid32	pid;
 	uint32 	counter = 0;
 	uint32 	winner;
 	uint32	total_tickets = 0;
@@ -15,7 +18,14 @@ pid32	lottery(void)
 	qid16	tail = queuetail(lotterylist);
 
 	if (oneid(lotterylist)) {
-		return dequeue(lotterylist);
+		pid = dequeue(lotterylist);
+		if (proctab[pid].tickets) {
+			return pid;
+		}
+		else {
+			insert(pid, lotterylist, proctab[pid].tickets);
+			return dequeue(readylist);
+		}
 	}
 
 	while (next != tail) {	// count total # of tickets
@@ -25,16 +35,19 @@ pid32	lottery(void)
 
 	next = firstid(lotterylist);
 	winner = rand() % total_tickets;
-
-	//kprintf("  Win: %d / %d | Count:", winner, total_tickets);
+	#ifdef DEBUG_LOTTERY
+		kprintf("  Win: %d / %d | Count:", winner, total_tickets);
+	#endif
 
 	while (next != tail) {	// determine the winner
 		counter += queuetab[next].qkey;
-
-		//kprintf("%d, ", counter);
-
+		#ifdef DEBUG_LOTTERY
+			kprintf("%d, ", counter);
+		#endif
 		if (counter > winner) {
-			//kprintf("| Proc: %d\n", next);
+			#ifdef DEBUG_LOTTERY
+				kprintf("| Proc: %d\n", next);
+			#endif
 			return getitem(next);
 		}
 
@@ -42,7 +55,7 @@ pid32	lottery(void)
 	}
 
 	// this should not happen but it's good to include just in case
-	return NULLPROC;
+	return dequeue(readylist);
 }
 
 /*------------------------------------------------------------------------
@@ -69,12 +82,22 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
 		if (ptold->user_process == USER) {	// old process is USER
 			if (ptold->prprio > firstkey(readylist)) {
+				#ifdef DEBUG_RESCHED
+					kprintf("USER->USER\n");
+				#endif
 				insert(currpid, lotterylist, ptold->tickets);
 				currpid = lottery();
-				if (currpid == oldpid)
+				if (currpid == oldpid) {
+					#ifdef DEBUG_RESCHED
+						kprintf("(continue)\n");
+					#endif
 					return;
+				}
 			}
 			else {
+				#ifdef DEBUG_RESCHED
+					kprintf("USER->SYSTEM\n");
+				#endif
 				insert(currpid, lotterylist, ptold->tickets);
 				currpid = dequeue(readylist);
 			}
@@ -84,16 +107,25 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		else {	// old process is SYSTEM
 			if (ptold->prprio > firstkey(readylist)) {
 				if ((currpid == NULLPROC) && nonempty(lotterylist)) {
+					#ifdef DEBUG_RESCHED
+						kprintf("SYSTEM->USER\n");
+					#endif
 					/* Put Null process back in the ready list	*/
 					ptold->prstate = PR_READY;
 					insert(currpid, readylist, ptold->prprio);
 					currpid = lottery();
 				}
 				else {
+					#ifdef DEBUG_RESCHED
+						kprintf("SYSTEM->SYSTEM (continue)\n");
+					#endif
 					return;
 				}
 			}
 			else {
+				#ifdef DEBUG_RESCHED
+					kprintf("SYSTEM->SYSTEM\n");
+				#endif
 				/* Old process will no longer remain current */
 				ptold->prstate = PR_READY;
 				insert(currpid, readylist, ptold->prprio);
@@ -106,10 +138,18 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		}
 	}
 	else {	/* Process is no longer eligible */
-		if ((firstid(readylist) == NULLPROC) && nonempty(lotterylist))
+		if ((firstid(readylist) == NULLPROC) && nonempty(lotterylist)) {
+			#ifdef DEBUG_RESCHED
+				kprintf("KILL->USER\n");
+			#endif
 			currpid = lottery();
-		else
+		}
+		else {
+			#ifdef DEBUG_RESCHED
+				kprintf("KILL->SYSTEM\n");
+			#endif
 			currpid = dequeue(readylist);
+		}
 	}
 
 	/* Force context switch to highest priority ready process */

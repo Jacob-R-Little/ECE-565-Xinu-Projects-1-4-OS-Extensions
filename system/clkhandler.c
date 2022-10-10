@@ -9,8 +9,6 @@
 void	clkhandler()
 {
 	static	uint32	count1000 = 1000;	/* Count to 1000 ms	*/
-	struct	procent	*prptr;		/* pointer to process		*/
-	uint32 i;
 
 	/* Decrement the ms counter, and see if a second has passed */
 
