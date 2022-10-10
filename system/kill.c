@@ -21,6 +21,10 @@ syscall	kill(
 		return SYSERR;
 	}
 
+	/* Calculate process turnaround time	*/
+
+	prptr->turnaroundtime = ctr1000 - prptr->creationtime;
+
 	if (--prcount <= 1) {		/* Last user process completes	*/
 		xdone();
 	}

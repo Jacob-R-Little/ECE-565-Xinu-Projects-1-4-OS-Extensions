@@ -57,6 +57,7 @@ pid32	create(
 
 	/* Initialize process execution statistics	*/
 
+	prptr->creationtime = ctr1000;
 	prptr->runtime = 0;
 	prptr->turnaroundtime = 0;
 	prptr->num_ctxsw = 0;
@@ -157,6 +158,7 @@ pid32	create_user_process(
 
 	/* Initialize process execution statistics	*/
 
+	prptr->creationtime = ctr1000;
 	prptr->runtime = 0;
 	prptr->turnaroundtime = 0;
 	prptr->num_ctxsw = 0;

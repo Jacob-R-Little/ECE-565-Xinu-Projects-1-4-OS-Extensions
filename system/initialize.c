@@ -191,6 +191,11 @@ static	void	sysinit()
 	prptr->prstkbase = getstk(NULLSTK);
 	prptr->prstklen = NULLSTK;
 	prptr->prstkptr = 0;
+	prptr->creationtime = 0;
+	prptr->runtime = 0;
+	prptr->turnaroundtime = 0;
+	prptr->num_ctxsw = 0;
+	prptr->user_process = SYSTEM;
 	currpid = NULLPROC;
 	
 	/* Initialize semaphores */
