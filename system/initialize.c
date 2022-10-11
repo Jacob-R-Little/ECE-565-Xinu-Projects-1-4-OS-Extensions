@@ -224,6 +224,8 @@ static	void	sysinit()
 
 	/* initialize the booster counter for MLFQ to 0	*/
 	boost_counter = 0;
+	MPQ_counter = 0;
+	LPQ_counter = 0;
 
 	/* initialize the PCI bus */
 

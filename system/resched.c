@@ -3,43 +3,62 @@
 #include <xinu.h>
 
 #define DEBUG_CTXSW
+//#define DEBUG_RESCHED
 
 struct	defer	Defer;
 
-uint32 boost_counter;
+uint32	boost_counter;
+uint32	MPQ_counter;
+uint32	LPQ_counter;
+bool8	async_resched;
+
+bool8 MLFQ_nonempty() {
+	return nonempty(HPQ) || nonempty(MPQ) || nonempty(LPQ);
+}
+
+void MLFQ_insert(pid32 pid) {
+	switch (proctab[pid].prprio) {
+		case HPQPRIO:
+			enqueue(currpid, HPQ);
+			break;
+		case MPQPRIO:
+			enqueue(currpid, MPQ);
+			break;
+		case LPQPRIO:
+			enqueue(currpid, LPQ);
+			break;
+		default:
+			break;
+	}
+}
 
 pid32 mlfq(void) {
 
 	pid32 pid;
-	struct procent *ptr;
+	struct procent *ptr, *oldptr;
+	oldptr = &proctab[currpid];
 
-	ptr = &proctab[currpid];
-	if (ptr->user_process == USER) {
-		switch (ptr->prprio) {
-			case HPQPRIO:
-				enqueue(currpid, HPQ);
-				break;
-			case MPQPRIO:
-				enqueue(currpid, MPQ);
-				break;
-			case LPQPRIO:
-				enqueue(currpid, LPQ);
-				break;
-			default
-				break;
-		}	
+	// FIXME: debug print MLFQ queues
+
+	if (async_resched) {
+		MPQ_counter = 0;
+		LPQ_counter = 0;
 	}
+	async_resched = TRUE;
 
 	if (boost_counter >= PRIORITY_BOOST_PERIOD) {
 		boost_counter = 0;
 		while (nonempty(MPQ)) {
-			pid = dequeue(MPQ)
+			pid = dequeue(MPQ);
 			ptr = &proctab[pid];
 			ptr->prprio = HPQPRIO;
-			enqueue(dequeue(MPQ),HPQ);
+			enqueue(pid, HPQ);
 		}
 		while (nonempty(LPQ)) {
-			enqueue(dequeue(LPQ),HPQ);
+			pid = dequeue(LPQ);
+			ptr = &proctab[pid];
+			ptr->prprio = HPQPRIO;
+			enqueue(pid, HPQ);
 		}
 	}
 
@@ -52,26 +71,36 @@ pid32 mlfq(void) {
 		else {
 			ptr->time_allotment = 0;
 			ptr->prprio = MPQPRIO;
+			enqueue(pid, MPQ);
 		}
 	}
-	if (TRUE) {
-			while (nonempty(MPQ)) {
-			pid = dequeue(MPQ);
-			ptr = &proctab[pid];
-			if (ptr->time_allotment < TIME_ALLOTMENT) {
-				return pid;
-			}
-			else {
-				ptr->time_allotment = 0;
-				ptr->prprio = LPQPRIO;
-			}
-		}
+
+	if (oldptr->prprio == MPQPRIO && ( MPQ_counter < 2*QUANTUM)) {
+		MPQ_counter = 0;
+		return getitem(currpid);
 	}
-	if (TRUE) {
-		while (nonempty(LPQ)) {
-			pid = dequeue(MPQ);
+
+	while (nonempty(MPQ)) {
+		pid = dequeue(MPQ);
+		ptr = &proctab[pid];
+		if (ptr->time_allotment < TIME_ALLOTMENT) {
 			return pid;
 		}
+		else {
+			ptr->time_allotment = 0;
+			ptr->prprio = LPQPRIO;
+			enqueue(pid, LPQ);
+		}
+	}
+
+	if (oldptr->prprio == LPQPRIO && ( LPQ_counter < 4*QUANTUM)) {
+		LPQ_counter = 0;
+		return getitem(currpid);
+	}
+	
+	while (nonempty(LPQ)) {
+		pid = dequeue(MPQ);
+		return pid;
 	}
 
 	// this should never happen
@@ -100,19 +129,80 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	ptold = &proctab[currpid];
 
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
-		if (ptold->prprio > firstkey(readylist)) {
-			return;
+		if (ptold->user_process == USER) {	// old process is USER
+			if (ptold->prprio > firstkey(readylist)) {
+				#ifdef DEBUG_RESCHED
+					kprintf("USER->USER\n");
+				#endif
+				MLFQ_insert(currpid);
+				currpid = mlfq();
+				if (currpid == oldpid) {
+					#ifdef DEBUG_RESCHED
+						kprintf("(continue)\n");
+					#endif
+					return;
+				}
+			}
+			else {
+				#ifdef DEBUG_RESCHED
+					kprintf("USER->SYSTEM\n");
+				#endif
+				MLFQ_insert(currpid);
+				currpid = dequeue(readylist);
+			}
+			
+			ptold->prstate = PR_READY;
 		}
+		else {	// old process is SYSTEM
+			if (ptold->prprio > firstkey(readylist)) {
+				if ((currpid == NULLPROC) && MLFQ_nonempty()) {
+					#ifdef DEBUG_RESCHED
+						kprintf("SYSTEM->USER\n");
+					#endif
+					/* Put Null process back in the ready list	*/
+					ptold->prstate = PR_READY;
+					insert(currpid, readylist, ptold->prprio);
+					currpid = mlfq();
+				}
+				else {
+					#ifdef DEBUG_RESCHED
+						kprintf("SYSTEM->SYSTEM (continue)\n");
+					#endif
+					return;
+				}
+			}
+			else {
+				#ifdef DEBUG_RESCHED
+					kprintf("SYSTEM->SYSTEM\n");
+				#endif
+				/* Old process will no longer remain current */
+				ptold->prstate = PR_READY;
+				insert(currpid, readylist, ptold->prprio);
 
-		/* Old process will no longer remain current */
-
-		ptold->prstate = PR_READY;
-		insert(currpid, readylist, ptold->prprio);
+				if ((firstid(readylist) == NULLPROC) && MLFQ_nonempty())
+					currpid = mlfq();
+				else
+					currpid = dequeue(readylist);
+			}
+		}
+	}
+	else {	/* Process is no longer eligible */
+		if ((firstid(readylist) == NULLPROC) && MLFQ_nonempty()) {
+			#ifdef DEBUG_RESCHED
+				kprintf("KILL->USER\n");
+			#endif
+			currpid = mlfq();
+		}
+		else {
+			#ifdef DEBUG_RESCHED
+				kprintf("KILL->SYSTEM\n");
+			#endif
+			currpid = dequeue(readylist);
+		}
 	}
 
 	/* Force context switch to highest priority ready process */
 
-	currpid = dequeue(readylist);
 	ptnew = &proctab[currpid];
 	ptnew->prstate = PR_CURR;
 	ptnew->num_ctxsw++;
