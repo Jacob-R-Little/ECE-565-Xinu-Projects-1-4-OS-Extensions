@@ -47,7 +47,13 @@ status	ready(
 
 	prptr = &proctab[pid];
 	prptr->prstate = PR_READY;
-	insert(pid, readylist, prptr->prprio);
+	if (prptr->user_process == USER) {
+		enqueue(pid, HPQ);
+	}
+	else {
+		insert(pid, readylist, prptr->prprio);
+	}
+
 	resched();
 
 	return OK;

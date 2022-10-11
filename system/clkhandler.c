@@ -45,11 +45,6 @@ void	clkhandler()
 
 	boost_counter++;
 
-	if (proctab[currpid].prprio == MPQPRIO)
-		MPQ_counter++;
-	if (proctab[currpid].prprio == LPQPRIO)
-		LPQ_counter++;
-
 	proctab[currpid].runtime++;
 
 	if (proctab[currpid].user_process == USER)
@@ -68,6 +63,7 @@ void	clkhandler()
 
 	if((--preempt) <= 0) {
 		preempt = QUANTUM;
+		PQ_counter++;
 		async_resched = FALSE;
 		resched();
 	}

@@ -2,15 +2,49 @@
 
 #include <xinu.h>
 
-#define DEBUG_CTXSW
+//#define DEBUG_CTXSW
+//#define DEBUG_MLFQ
 //#define DEBUG_RESCHED
 
 struct	defer	Defer;
 
 uint32	boost_counter;
-uint32	MPQ_counter;
-uint32	LPQ_counter;
+uint32	PQ_counter;
 bool8	async_resched;
+
+void print_MLFQ() {
+	qid16	next = firstid(HPQ);
+	qid16	tail = queuetail(HPQ);
+
+	kprintf("HPQ: ");
+
+	while(next != tail) {
+		kprintf("%d, ", (uint32)next);
+		next = queuetab[next].qnext;
+	}
+
+	kprintf("\nMPQ: ");
+
+	next = firstid(MPQ);
+	tail = queuetail(MPQ);
+
+	while(next != tail) {
+		kprintf("%d, ", (uint32)next);
+		next = queuetab[next].qnext;
+	}
+
+	kprintf("\nLPQ: ");
+
+	next = firstid(LPQ);
+	tail = queuetail(LPQ);
+
+	while(next != tail) {
+		kprintf("%d, ", (uint32)next);
+		next = queuetab[next].qnext;
+	}
+
+	kprintf("\n");
+}
 
 bool8 MLFQ_nonempty() {
 	return nonempty(HPQ) || nonempty(MPQ) || nonempty(LPQ);
@@ -37,16 +71,19 @@ pid32 mlfq(void) {
 	pid32 pid;
 	struct procent *ptr, *oldptr;
 	oldptr = &proctab[currpid];
-
-	// FIXME: debug print MLFQ queues
+	#ifdef DEBUG_MLFQ
+		print_MLFQ();
+	#endif
 
 	if (async_resched) {
-		MPQ_counter = 0;
-		LPQ_counter = 0;
+		PQ_counter = 0;
 	}
 	async_resched = TRUE;
 
 	if (boost_counter >= PRIORITY_BOOST_PERIOD) {
+		#ifdef DEBUG_MLFQ
+			kprintf("PRIORITY BOOST:\n");
+		#endif
 		boost_counter = 0;
 		while (nonempty(MPQ)) {
 			pid = dequeue(MPQ);
@@ -60,6 +97,9 @@ pid32 mlfq(void) {
 			ptr->prprio = HPQPRIO;
 			enqueue(pid, HPQ);
 		}
+		#ifdef DEBUG_MLFQ
+			print_MLFQ();
+		#endif
 	}
 
 	while(nonempty(HPQ)) {
@@ -75,8 +115,7 @@ pid32 mlfq(void) {
 		}
 	}
 
-	if (oldptr->prprio == MPQPRIO && ( MPQ_counter < 2*QUANTUM)) {
-		MPQ_counter = 0;
+	if (oldptr->prprio == MPQPRIO && (PQ_counter % 2)) {
 		return getitem(currpid);
 	}
 
@@ -93,13 +132,12 @@ pid32 mlfq(void) {
 		}
 	}
 
-	if (oldptr->prprio == LPQPRIO && ( LPQ_counter < 4*QUANTUM)) {
-		LPQ_counter = 0;
+	if (oldptr->prprio == LPQPRIO && (PQ_counter % 4)) {
 		return getitem(currpid);
 	}
 	
 	while (nonempty(LPQ)) {
-		pid = dequeue(MPQ);
+		pid = dequeue(LPQ);
 		return pid;
 	}
 

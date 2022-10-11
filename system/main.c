@@ -3,6 +3,7 @@
 
 void timed_execution(uint32 runtime){
 	    while(proctab[currpid].runtime<runtime);
+            //kprintf("%d DONE!", currpid);
 }
 
 int main() {

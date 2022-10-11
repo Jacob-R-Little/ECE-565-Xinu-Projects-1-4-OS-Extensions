@@ -19,6 +19,5 @@ struct	defer	{
 extern	struct	defer	Defer;
 
 extern	uint32	boost_counter;
-extern	uint32	MPQ_counter;
-extern	uint32	LPQ_counter;
+extern	uint32	PQ_counter;
 extern	bool8	async_resched;
