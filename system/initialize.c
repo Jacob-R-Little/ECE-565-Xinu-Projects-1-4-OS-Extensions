@@ -196,6 +196,7 @@ static	void	sysinit()
 	prptr->turnaroundtime = 0;
 	prptr->num_ctxsw = 0;
 	prptr->user_process = SYSTEM;
+	prptr->time_allotment = 0;
 	currpid = NULLPROC;
 	
 	/* Initialize semaphores */
@@ -215,6 +216,14 @@ static	void	sysinit()
 
 	readylist = newqueue();
 
+	/* Create multi-level feedback queues USER for processes */
+
+	HPQ = newqueue();
+	MPQ = newqueue();
+	LPQ = newqueue();
+
+	/* initialize the booster counter for MLFQ to 0	*/
+	boost_counter = 0;
 
 	/* initialize the PCI bus */
 

@@ -41,7 +41,14 @@ void	clkhandler()
 		}
 	}
 
+	// increment the boost counter for MLFQ
+
+	boost_counter++;
+
 	proctab[currpid].runtime++;
+
+	if (proctab[currpid].user_process == USER)
+		proctab[currpid].time_allotment++;
 
 	for (i = 0; i < NPROC; i++) {
 		prptr = &proctab[i];

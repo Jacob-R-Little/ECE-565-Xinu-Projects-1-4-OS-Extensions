@@ -6,6 +6,78 @@
 
 struct	defer	Defer;
 
+uint32 boost_counter;
+
+pid32 mlfq(void) {
+
+	pid32 pid;
+	struct procent *ptr;
+
+	ptr = &proctab[currpid];
+	if (ptr->user_process == USER) {
+		switch (ptr->prprio) {
+			case HPQPRIO:
+				enqueue(currpid, HPQ);
+				break;
+			case MPQPRIO:
+				enqueue(currpid, MPQ);
+				break;
+			case LPQPRIO:
+				enqueue(currpid, LPQ);
+				break;
+			default
+				break;
+		}	
+	}
+
+	if (boost_counter >= PRIORITY_BOOST_PERIOD) {
+		boost_counter = 0;
+		while (nonempty(MPQ)) {
+			pid = dequeue(MPQ)
+			ptr = &proctab[pid];
+			ptr->prprio = HPQPRIO;
+			enqueue(dequeue(MPQ),HPQ);
+		}
+		while (nonempty(LPQ)) {
+			enqueue(dequeue(LPQ),HPQ);
+		}
+	}
+
+	while(nonempty(HPQ)) {
+		pid = dequeue(HPQ);
+		ptr = &proctab[pid];
+		if (ptr->time_allotment < TIME_ALLOTMENT) {
+			return pid;
+		}
+		else {
+			ptr->time_allotment = 0;
+			ptr->prprio = MPQPRIO;
+		}
+	}
+	if (TRUE) {
+			while (nonempty(MPQ)) {
+			pid = dequeue(MPQ);
+			ptr = &proctab[pid];
+			if (ptr->time_allotment < TIME_ALLOTMENT) {
+				return pid;
+			}
+			else {
+				ptr->time_allotment = 0;
+				ptr->prprio = LPQPRIO;
+			}
+		}
+	}
+	if (TRUE) {
+		while (nonempty(LPQ)) {
+			pid = dequeue(MPQ);
+			return pid;
+		}
+	}
+
+	// this should never happen
+	return dequeue(readylist);
+}
+
 /*------------------------------------------------------------------------
  *  resched  -  Reschedule processor to highest priority eligible process
  *------------------------------------------------------------------------

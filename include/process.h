@@ -26,7 +26,9 @@
 
 #define	INITSTK		65536	/* Initial process stack size		*/
 #define	INITPRIO	20	/* Initial process priority		*/
-#define	USERPRIO	10	/* USER process priority	*/
+#define	HPQPRIO		3	/* priority for USER processes in the HPQ	*/
+#define	MPQPRIO		2	/* priority for USER processes in the MPQ	*/
+#define	LPQPRIO		1	/* priority for USER processes in the LPQ	*/
 #define	INITRET		userret	/* Address to which process returns	*/
 
 /* Inline code to check process ID (assumes interrupts are disabled)	*/
@@ -63,6 +65,7 @@ struct procent {		/* Entry in the process table		*/
 	uint32	turnaroundtime;	/* turnaround time in milliseconds	*/
 	uint32	num_ctxsw;	/* number of context switch operations to the process	*/
 	bool8 	user_process;	/* flag to differentiate USER and SYSTEM processes	*/
+	uint32	time_allotment;
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/

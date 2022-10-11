@@ -5,6 +5,9 @@
 #define	DEFER_START	1	/* Start deferred rescehduling		*/
 #define	DEFER_STOP	2	/* Stop  deferred rescehduling		*/
 
+#define TIME_ALLOTMENT 100
+#define PRIORITY_BOOST_PERIOD 100000
+
 /* Structure that collects items related to deferred rescheduling	*/
 
 struct	defer	{
@@ -14,3 +17,5 @@ struct	defer	{
 };
 
 extern	struct	defer	Defer;
+
+extern	boost_counter;
