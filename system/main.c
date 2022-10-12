@@ -63,9 +63,6 @@ process test1(){
 
 process	main(void)
 {
-	uint32 i;
-	uint32 time_capture = clktime;
-
 	printf("\n\n");
 
 	resume(create_user_process((void *)test1, 8192, "test1", 0));
