@@ -222,14 +222,7 @@ pid32	create_user_process(
 
 void set_tickets(pid32 pid, uint32 tickets) {
 	struct procent *prptr = &proctab[pid];
-	uint32 oldtickets = prptr->tickets;
-
 	prptr->tickets = tickets;
-	// if (!oldtickets && tickets && (prptr->prstate == PR_READY))
-	// 	insert(pid, lotterylist, prptr->tickets);
-	// else if (oldtickets && !tickets && (prptr->prstate == PR_READY))
-	// 	getitem(pid);
-
 }
 
 

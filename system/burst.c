@@ -17,13 +17,10 @@ void burst_execution(
     )
 {
     uint32 i;
-    uint32 time_capture;
     struct procent *prptr = &proctab[currpid];
-    for (i=0; i<number_bursts; i++) {
-        time_capture = prptr->runtime;
-        //burst_sync_printf("%d EXECUTE from %d to %d\n", currpid, time_capture, time_capture + burst_duration);
-        while (prptr->runtime < time_capture + burst_duration);
-        //burst_sync_printf("%d SLEEP from %d to %d\n", currpid, ctr1000, ctr1000 + sleep_duration);
+    
+    for (i=1; i<number_bursts+1; i++) {
+        while (prptr->runtime < burst_duration * i);
         sleepms(sleep_duration);
     }
 

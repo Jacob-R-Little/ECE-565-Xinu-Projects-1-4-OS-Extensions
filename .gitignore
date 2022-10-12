@@ -17,6 +17,8 @@ config/lex.yy.c
 
 config/y.tab.c
 
+config/.yyleng
+
 include/conf.h
 
 system/conf.c

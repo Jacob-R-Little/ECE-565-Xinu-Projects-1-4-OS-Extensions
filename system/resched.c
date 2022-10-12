@@ -1,9 +1,10 @@
 /* resched.c - resched, resched_cntl */
 
 #include <xinu.h>
+#include <stdlib.h>
 
 //#define DEBUG_CTXSW
-//#define	DEBUG_RESCHED
+//#define DEBUG_RESCHED
 //#define DEBUG_LOTTERY
 
 struct	defer	Defer;
