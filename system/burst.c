@@ -22,12 +22,11 @@ void burst_execution(
     uint32 time_capture;
     struct procent *prptr = &proctab[currpid];
     
-    for (i=0; i<number_bursts; i++) {
-        time_capture = prptr->runtime;
+    for (i=1; i<number_bursts+1; i++) {
         #ifdef DEBUG_BURST
             if (currpid == 11) burst_sync_printf("%d | LOOP: %d | EXEC: %d to %d\n", currpid, i, time_capture, time_capture + burst_duration);
         #endif
-        while (prptr->runtime < time_capture + burst_duration);
+        while (prptr->runtime < burst_duration * i);
         #ifdef DEBUG_BURST
             if (currpid == 11) burst_sync_printf("Runtime before Sleep: %d ", prptr->runtime);
         #endif
