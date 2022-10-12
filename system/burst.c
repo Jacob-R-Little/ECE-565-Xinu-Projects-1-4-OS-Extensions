@@ -2,8 +2,6 @@
 
 #include <xinu.h>
 
-// #define DEBUG_BURST
-
 void burst_sync_printf(char *fmt, ...)
 {
         intmask mask = disable();
@@ -19,21 +17,11 @@ void burst_execution(
     )
 {
     uint32 i;
-    uint32 time_capture;
     struct procent *prptr = &proctab[currpid];
     
     for (i=1; i<number_bursts+1; i++) {
-        #ifdef DEBUG_BURST
-            if (currpid == 11) burst_sync_printf("%d | LOOP: %d | EXEC: %d to %d\n", currpid, i, time_capture, time_capture + burst_duration);
-        #endif
         while (prptr->runtime < burst_duration * i);
-        #ifdef DEBUG_BURST
-            if (currpid == 11) burst_sync_printf("Runtime before Sleep: %d ", prptr->runtime);
-        #endif
         sleepms(sleep_duration);
-        #ifdef DEBUG_BURST
-            if (currpid == 11) burst_sync_printf("| Runtime after Wake Up: %d\n", prptr->runtime);
-        #endif
     }
 
 }
