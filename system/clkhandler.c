@@ -45,18 +45,11 @@ void	clkhandler()
 
 	boost_counter++;
 
-	proctab[currpid].runtime++;
+	prptr = &proctab[currpid];
 
-	if (proctab[currpid].user_process == USER)
-		proctab[currpid].time_allotment++;
+	if (prptr->prstate == PR_CURR) prptr->runtime++;
 
-	for (i = 0; i < NPROC; i++) {
-		prptr = &proctab[i];
-		if (prptr->prstate == PR_FREE) {  /* skip unused slots	*/
-			continue;
-		}
-		prptr->turnaroundtime++;
-	}
+	if (prptr->user_process == USER) prptr->time_allotment++;
 
 	/* Decrement the preemption counter, and reschedule when the */
 	/*   remaining time reaches zero			     */

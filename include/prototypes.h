@@ -463,6 +463,7 @@ extern	umsg32	recvclr(void);
 extern	umsg32	recvtime(int32);
 
 /* in file resched.c */
+extern	void 	MLFQ_insert(pid32);
 extern	void	resched(void);
 extern	status	resched_cntl(int32);
 

@@ -2,6 +2,16 @@
 
 #include <xinu.h>
 
+// #define DEBUG_BURST
+
+void burst_sync_printf(char *fmt, ...)
+{
+        intmask mask = disable();
+        void *arg = __builtin_apply_args();
+        __builtin_apply((void*)kprintf, arg, 100);
+        restore(mask);
+}
+
 void burst_execution(
     uint32 number_bursts,
     uint32 burst_duration,
@@ -14,10 +24,17 @@ void burst_execution(
     
     for (i=0; i<number_bursts; i++) {
         time_capture = prptr->runtime;
-        //kprintf("EXECUTE from %d to %d\n", time_capture, time_capture + burst_duration);
+        #ifdef DEBUG_BURST
+            if (currpid == 11) burst_sync_printf("%d | LOOP: %d | EXEC: %d to %d\n", currpid, i, time_capture, time_capture + burst_duration);
+        #endif
         while (prptr->runtime < time_capture + burst_duration);
-        //kprintf("Sleep from %d to %d\n", ctr1000, ctr1000 + sleep_duration);
+        #ifdef DEBUG_BURST
+            if (currpid == 11) burst_sync_printf("Runtime before Sleep: %d ", prptr->runtime);
+        #endif
         sleepms(sleep_duration);
+        #ifdef DEBUG_BURST
+            if (currpid == 11) burst_sync_printf("| Runtime after Wake Up: %d\n", prptr->runtime);
+        #endif
     }
 
 }

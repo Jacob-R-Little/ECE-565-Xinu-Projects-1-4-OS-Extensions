@@ -4,7 +4,7 @@
 
 //#define DEBUG_CTXSW
 //#define DEBUG_MLFQ
-//#define DEBUG_RESCHED
+//#define DEBUG_RESCHEDs
 
 struct	defer	Defer;
 
@@ -53,13 +53,13 @@ bool8 MLFQ_nonempty() {
 void MLFQ_insert(pid32 pid) {
 	switch (proctab[pid].prprio) {
 		case HPQPRIO:
-			enqueue(currpid, HPQ);
+			enqueue(pid, HPQ);
 			break;
 		case MPQPRIO:
-			enqueue(currpid, MPQ);
+			enqueue(pid, MPQ);
 			break;
 		case LPQPRIO:
-			enqueue(currpid, LPQ);
+			enqueue(pid, LPQ);
 			break;
 		default:
 			break;
@@ -68,7 +68,7 @@ void MLFQ_insert(pid32 pid) {
 
 pid32 mlfq(void) {
 
-	pid32 pid;
+	pid32 pid, tail;
 	struct procent *ptr, *oldptr;
 	oldptr = &proctab[currpid];
 	#ifdef DEBUG_MLFQ
@@ -82,21 +82,40 @@ pid32 mlfq(void) {
 
 	if (boost_counter >= PRIORITY_BOOST_PERIOD) {
 		#ifdef DEBUG_MLFQ
-			kprintf("PRIORITY BOOST:\n");
+			kprintf("----------PRIORITY BOOST----------\n");
 		#endif
 		boost_counter = 0;
+		pid = firstid(HPQ);
+		tail = queuetail(HPQ);
+		while (pid != tail) {
+			ptr = &proctab[pid];
+			ptr->time_allotment = 0;
+			pid = queuetab[pid].qnext;
+		}
 		while (nonempty(MPQ)) {
 			pid = dequeue(MPQ);
 			ptr = &proctab[pid];
+			ptr->time_allotment = 0;
 			ptr->prprio = HPQPRIO;
 			enqueue(pid, HPQ);
 		}
 		while (nonempty(LPQ)) {
 			pid = dequeue(LPQ);
 			ptr = &proctab[pid];
+			ptr->time_allotment = 0;
 			ptr->prprio = HPQPRIO;
 			enqueue(pid, HPQ);
 		}
+		pid = firstid(sleepq);
+		tail = queuetail(sleepq);
+		while (pid != tail) {
+			ptr = &proctab[pid];
+			if (ptr->user_process == USER) {
+				ptr->prprio = HPQPRIO;
+			}
+			pid = queuetab[pid].qnext;
+		}
+
 		#ifdef DEBUG_MLFQ
 			print_MLFQ();
 		#endif

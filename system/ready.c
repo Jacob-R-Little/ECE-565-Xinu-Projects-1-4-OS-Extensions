@@ -48,7 +48,7 @@ status	ready(
 	prptr = &proctab[pid];
 	prptr->prstate = PR_READY;
 	if (prptr->user_process == USER) {
-		enqueue(pid, HPQ);
+		MLFQ_insert(pid);
 	}
 	else {
 		insert(pid, readylist, prptr->prprio);
