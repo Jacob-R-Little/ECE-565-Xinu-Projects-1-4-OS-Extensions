@@ -1,0 +1,17 @@
+=====     Testing the SPINLOCK's implementation     =====
+
+
+================= TEST 1 = 10 threads ===================
+10 threads, n=1000, target value=1000
+TEST PASSED.
+
+
+================= TEST 2 = 20 threads ===================
+20 threads, n=1000, target value=1000
+TEST PASSED.
+
+
+================= TEST 3 = 50 threads ===================
+50 threads, n=1000, target value=1000
+TEST PASSED.
+

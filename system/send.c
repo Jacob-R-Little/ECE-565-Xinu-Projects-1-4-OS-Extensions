@@ -22,8 +22,7 @@ syscall	send(
 
 	prptr = &proctab[pid];
 	if (prptr->prhasmsg) {
-		restore(mask);
-		return SYSERR;
+		resched();		/* Modification to give parent the opportunity to read pending message	*/
 	}
 	prptr->prmsg = msg;		/* Deliver message		*/
 	prptr->prhasmsg = TRUE;		/* Indicate message is waiting	*/

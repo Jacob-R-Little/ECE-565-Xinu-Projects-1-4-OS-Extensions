@@ -1,0 +1,41 @@
+test_spinlock
+-------------
+Tests the implementation of spinlock on 10, 20 and 50 threads
+Note: this test case should take some time (a couple of minutes) to complete. If it completes in a couple of seconds, your test&set implementation might be incorrect. 
+
+
+test_lock & test_lock_prio
+--------------------------
+Test the implementation of lock w/ guard on 10, 20 and 50 threads in the presence of threads with the same and different priorities, respectively.
+
+
+test_timing
+-----------
+Example showing how to incorporate timing in your tests.
+Note: the timing can slightly change from run to run and be off by a couple of ms.
+
+It assumes:
+
+- runtime field in PCB (process.h), indicating the current runtime of a process
+- use of variable "ctr1000" to record the number of ms since boot
+
+To this end, add the following:
+
+- in clock.h
+
+	extern  uint32  ctr1000;        /* current time in msecs since boot     */
+
+- in clkhandler.c
+
+	/* update runtime of the current process */
+
+        proctab[currpid].runtime++;
+
+        /* update the ms counter (32 bits are enough for practical purposes) */
+
+        ctr1000++;
+
+
+test_deadlock
+-------------
+Test the deadlock detection code

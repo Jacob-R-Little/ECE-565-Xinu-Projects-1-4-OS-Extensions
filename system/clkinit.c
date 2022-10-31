@@ -26,6 +26,7 @@ void	clkinit(void)
 	/* Initialize the time since boot to zero */
 
 	clktime = 0;
+	ctr1000 = 0;
 
 	/* Set interrupt vector for the clock to invoke clkdisp */
 
