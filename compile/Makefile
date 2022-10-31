@@ -178,4 +178,13 @@ depclean:
 	rm -f $(DEPSFILE)
 	echo "" > $(DEPSFILE)
 
+start_vm:
+	VBoxManage startvm "backend" -type headless
+
+stop_vm:
+	VBoxManage controlvm "backend" poweroff
+
+restart_vm:
+	VBoxManage controlvm "backend" reset 
+
 -include $(DEPSFILE)
