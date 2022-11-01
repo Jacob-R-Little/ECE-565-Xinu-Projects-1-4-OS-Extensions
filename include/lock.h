@@ -12,7 +12,7 @@ typedef struct sl_lock_t {
 typedef struct lock_t {
     pid32   owner;
     uint32  flag;
-    uing32  guard;
+    uint32  guard;
     qid16   q;
 } lock_t;
 

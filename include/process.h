@@ -16,6 +16,7 @@
 #define	PR_SUSP		5	/* Process is suspended			*/
 #define	PR_WAIT		6	/* Process is on semaphore queue	*/
 #define	PR_RECTIM	7	/* Process is receiving with timeout	*/
+#define PR_LOCK		8	/* Process is wating on a lock */
 
 /* Miscellaneous process definitions */
 
@@ -53,6 +54,7 @@ struct procent {		/* Entry in the process table		*/
 	bool8	prhasmsg;	/* Nonzero iff msg is valid		*/
 	int16	prdesc[NDESC];	/* Device descriptors for process	*/
 	uint32	runtime;	/* number of milliseconds the process has been running	*/
+	uint32	parkfl;		/* flag to indicate if a process is about to park	*/
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/

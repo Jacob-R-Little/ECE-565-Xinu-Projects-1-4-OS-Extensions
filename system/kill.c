@@ -45,7 +45,7 @@ syscall	kill(
 	case PR_WAIT:
 		semtab[prptr->prsem].scount++;
 		/* Fall through */
-
+	case PR_LOCK:
 	case PR_READY:
 		getitem(pid);		/* Remove from queue */
 		/* Fall through */
