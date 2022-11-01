@@ -46,9 +46,11 @@ syscall	park () {
 	return OK;
 }
 
-syscall unpark (pid32 pid) {
+syscall unpark (lock_t *l) {
     intmask mask = disable();
 
+    pid32 pid = dequeue(l->q);
+    l->owner = pid;
     proctab[pid].parkfl = 0;
     proctab[pid].prstate = PR_READY;
     insert(pid, readylist, proctab[pid].prprio);
@@ -71,16 +73,10 @@ syscall initlock(lock_t *l) {
 
     if (lock_num == NSPINLOCKS) return SYSERR;
 
-    print_queue(readylist);
-    lock_printf("Expected NQENT: %d\n", NPROC + 4 + NSEM + NSEM + NLOCKS + NLOCKS);
-    lock_printf("Real NQENT: %d\n", NQENT);
-
-    lock_printf("Init Lock | ");
     l->owner = 0;
     l->flag = 0;
     l->guard = 0;
     l->q = newqueue();
-    lock_printf("QID: %d\n", l->q);
 
     lock_num++;
     return OK;
@@ -91,20 +87,15 @@ syscall lock(lock_t *l) {
         sleepms(QUANTUM);
 
     if (l->flag == 0) {
-        //lock_printf("Lock Acquired | QID: %d | PID: %d\n", l->q, currpid);
         l->owner = currpid;
         l->flag = 1;
         l->guard = 0;
     }
     else {
-        intmask mask = disable();
-        //lock_printf("Parking | QID: %d | PID: %d\n", l->q, currpid);
         enqueue(currpid, l->q);
-        //print_queue(l->q);
         setpark();
         l->guard = 0;
         park();
-        restore(mask);
     }
     
     return OK;
@@ -119,17 +110,10 @@ syscall unlock(lock_t *l) {
     }
 
     if (isempty(l->q)) {
-        //lock_printf("Lock Released | QID: %d | PID: %d\n", l->q, currpid);
         l->flag = 0;
     }
     else {
-        intmask mask = disable();
-        pid32 pid = dequeue(l->q);
-        l->owner = pid;
-        //lock_printf("Unparking | QID: %d | PID: %d\n", l->q, pid);
-        unpark(pid);
-        //print_queue(l->q);
-        restore(mask);
+        unpark(l);
     }
 
     l->guard = 0;
