@@ -1,0 +1,1 @@
+extern uint32 test_and_set(uint32 *, uint32);
