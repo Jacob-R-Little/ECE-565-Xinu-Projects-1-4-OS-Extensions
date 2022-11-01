@@ -27,7 +27,7 @@ test_and_set:
 
     movl    12(%ebp),%eax   /* eax = new_value */
 
-    xchg    (%ebx),eax      /* Perform atomic exchange */
+    xchg    (%ebx),%eax      /* Perform atomic exchange */
                             /* ebx dereferenced <--> eax */
                             /* *ptr <--> new_value */
                             /* eax now holds old_value so it is ready for return */
