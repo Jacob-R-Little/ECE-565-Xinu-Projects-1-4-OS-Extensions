@@ -1,40 +1,7 @@
 #include "xinu.h"
 
 
-syscall print_queue(qid16 q)
-{
-	intmask mask = disable();	/* Interrupt mask		*/
-	//qid16	next = firstid(q);
-    qid16	next = queuehead(q);
-	qid16	tail = queuetail(q);
-	
-
-	kprintf("QID: %d | ", q);
-
-	while(next != tail) {
-		kprintf("%d, ", (uint32)next);
-		next = queuetab[next].qnext;
-	}
-
-    kprintf("%d, ", (uint32)next);
-
-	kprintf("\n");
-
-	restore(mask);
-
-	return OK;
-}
-
-syscall lock_printf(char *fmt, ...)
-{
-        intmask mask = disable();
-        void *arg = __builtin_apply_args();
-        __builtin_apply((void*)kprintf, arg, 100);
-        restore(mask);
-        return OK;
-}
-
-syscall	park () {
+syscall	park() {
 	intmask mask = disable();
 
     if (proctab[currpid].parkfl) {
@@ -46,7 +13,7 @@ syscall	park () {
 	return OK;
 }
 
-syscall unpark (lock_t *l) {
+syscall unpark(lock_t *l) {
     intmask mask = disable();
 
     pid32 pid = dequeue(l->q);

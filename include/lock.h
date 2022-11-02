@@ -19,6 +19,8 @@ typedef struct lock_t {
 typedef struct al_lock_t {
     pid32   owner;
     uint32  flag;
+    uint32  guard;
+    qid16   q;
 } al_lock_t;
 
 /* function prototypes */
@@ -32,3 +34,7 @@ extern syscall initlock(lock_t *l);
 extern syscall lock(lock_t *l);
 extern syscall unlock(lock_t *l);
 
+extern syscall al_initlock(al_lock_t *l);
+extern syscall al_lock(al_lock_t *l);
+extern syscall al_unlock(al_lock_t *l);
+extern bool8 al_trylock(al_lock_t *l);
