@@ -55,6 +55,8 @@ struct procent {		/* Entry in the process table		*/
 	int16	prdesc[NDESC];	/* Device descriptors for process	*/
 	uint32	runtime;	/* number of milliseconds the process has been running	*/
 	uint32	parkfl;		/* flag to indicate if a process is about to park	*/
+	al_lock_t *lock;		/* lock being waited on */
+	bool8	deadlock;
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/

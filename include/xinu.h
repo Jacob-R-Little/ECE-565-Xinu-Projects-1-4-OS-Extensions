@@ -2,6 +2,7 @@
 
 #include <kernel.h>
 #include <conf.h>
+#include "lock.h"   // this might need to be moved up later
 #include <process.h>
 #include <queue.h>
 #include <resched.h>
@@ -41,4 +42,3 @@
 #include <multiboot.h>
 #include <stdio.h>
 #include <string.h>
-#include "lock.h"   // this might need to be moved up later

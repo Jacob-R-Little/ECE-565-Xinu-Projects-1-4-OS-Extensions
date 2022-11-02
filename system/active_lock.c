@@ -1,7 +1,7 @@
 #include "xinu.h"
 
-qid16 al_lock_queues[NALOCKS];
-pid32 deadlock_table[NPROC];
+al_lock_t al_locks[NALOCKS];
+pid32 deadlock_table[NALOCKS];
 uint32 al_lock_num = 0;
 
 syscall print_queue(qid16 q)
@@ -37,12 +37,73 @@ syscall lock_printf(char *fmt, ...)
         return OK;
 }
 
-bool8 detect_deadlock(pid32 pid, qid16 q) {
-    static uint32 depth = 0;
-    uint32 i, j;
-    qid16 search_q, next, tail;
-    bool8 deadlock, in_deadlock_table;
-    intmask mask = disable();
+// bool8 detect_deadlock(pid32 pid, qid16 q) {
+//     static uint32 depth = 0;
+//     uint32 i, j;
+//     qid16 search_q, next, tail;
+//     bool8 deadlock, in_deadlock_table;
+//     intmask mask = disable();
+
+//     deadlock_table[depth] = pid;
+
+//     kprintf("depth=%d | ", depth);
+//     for (i=0; deadlock_table[i]; i++) {
+//         kprintf("%d, ", deadlock_table[i]);
+//     }
+//     kprintf("\n", depth);
+
+//     for (i=0; i<al_lock_num; i++) {
+//         search_q = al_lock_queues[i];
+//         next = firstid(search_q);
+// 	    tail = queuetail(search_q);
+//         if (search_q != q) {
+//             while(next != tail) {
+
+//                 if (depth && (next == deadlock_table[0])) {
+//                     return TRUE;
+//                 }
+
+//                 // in_deadlock_table = FALSE;
+//                 // for (j=1; deadlock_table[i]; j++) {
+//                 //     if (next == deadlock_table[i]) {
+//                 //         in_deadlock_table = TRUE;
+//                 //         break;
+//                 //     }
+//                 // }
+
+//                 // if (in_deadlock_table == FALSE) {
+//                     depth++;
+//                     if (depth == NALOCKS) {
+//                         depth--;
+//                         return FALSE; 
+//                     }
+//                     deadlock = detect_deadlock(next, search_q);
+//                     depth--;
+//                     if (deadlock) {
+//                         if (depth == 0) {
+//                             kprintf("Detected\n");
+//                         }
+//                         return TRUE;
+//                     }
+//                 // }
+//                 next = queuetab[next].qnext;
+//             }
+//         }
+//     }
+
+//     deadlock_table[depth] = 0;
+
+//     restore(mask);
+//     return FALSE;
+// }
+
+syscall detect_deadlock(pid32 pid, al_lock_t *l) {
+    static uint32  depth = 0;
+    uint32  i;
+
+    if (proctab[pid].deadlock) {
+        return OK;
+    }
 
     deadlock_table[depth] = pid;
 
@@ -52,56 +113,32 @@ bool8 detect_deadlock(pid32 pid, qid16 q) {
     }
     kprintf("\n", depth);
 
-    for (i=0; i<al_lock_num; i++) {
-        search_q = al_lock_queues[i];
-        next = firstid(search_q);
-	    tail = queuetail(search_q);
-        if (search_q != q) {
-            while(next != tail) {
-
-                if (depth && (next == deadlock_table[0])) {
-                    return TRUE;
-                }
-
-                // in_deadlock_table = FALSE;
-                // for (j=1; deadlock_table[i]; j++) {
-                //     if (next == deadlock_table[i]) {
-                //         in_deadlock_table = TRUE;
-                //         break;
-                //     }
-                // }
-
-                // if (in_deadlock_table == FALSE) {
-                    depth++;
-                    if (depth == NALOCKS) {
-                        depth--;
-                        return FALSE; 
-                    }
-                    deadlock = detect_deadlock(next, search_q);
-                    depth--;
-                    if (deadlock) {
-                        if (depth == 0) {
-                            kprintf("Detected\n");
-                        }
-                        return TRUE;
-                    }
-                // }
-                next = queuetab[next].qnext;
-            }
+    if (l->owner == deadlock_table[0]) {
+        kprintf("Deadlock Detected!\n");
+        for (i=0; deadlock_table[i]; i++) {
+            proctab[deadlock_table[i]].deadlock = TRUE;
         }
+        deadlock_table[depth] = 0;
+        return OK;
+    }
+
+    if (proctab[l->owner].prstate == PR_LOCK) {
+        depth++;
+        detect_deadlock(l->owner, proctab[l->owner].lock);
+        depth--;
     }
 
     deadlock_table[depth] = 0;
-
-    restore(mask);
-    return FALSE;
+    return OK;
 }
 
-syscall	al_park() {
+syscall	al_park(al_lock_t *l) {
 	intmask mask = disable();
 
     if (proctab[currpid].parkfl) {
         proctab[currpid].prstate = PR_LOCK;
+        proctab[currpid].lock = l;
+        detect_deadlock(currpid, l);
 	    resched();
     }
 	
@@ -116,6 +153,8 @@ syscall al_unpark(al_lock_t *l) {
     l->owner = pid;
     proctab[pid].parkfl = 0;
     proctab[pid].prstate = PR_READY;
+    proctab[pid].lock = NULL;
+
     insert(pid, readylist, proctab[pid].prprio);
 
     restore(mask);
@@ -140,7 +179,7 @@ syscall al_initlock(al_lock_t *l) {
     l->flag = 0;
     l->guard = 0;
     l->q = newqueue();
-    al_lock_queues[al_lock_num] = l->q;
+    // al_locks[al_lock_num] = l;
 
     al_lock_num++;
 
@@ -159,10 +198,9 @@ syscall al_lock(al_lock_t *l) {
     }
     else {
         enqueue(currpid, l->q);
-        detect_deadlock(currpid, l->q);
         al_setpark();
         l->guard = 0;
-        al_park();
+        al_park(l);
     }
     
     return OK;
