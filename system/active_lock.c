@@ -37,69 +37,11 @@ syscall lock_printf(char *fmt, ...)
         return OK;
 }
 
-// bool8 detect_deadlock(pid32 pid, qid16 q) {
-//     static uint32 depth = 0;
-//     uint32 i, j;
-//     qid16 search_q, next, tail;
-//     bool8 deadlock, in_deadlock_table;
-//     intmask mask = disable();
-
-//     deadlock_table[depth] = pid;
-
-//     kprintf("depth=%d | ", depth);
-//     for (i=0; deadlock_table[i]; i++) {
-//         kprintf("%d, ", deadlock_table[i]);
-//     }
-//     kprintf("\n", depth);
-
-//     for (i=0; i<al_lock_num; i++) {
-//         search_q = al_lock_queues[i];
-//         next = firstid(search_q);
-// 	    tail = queuetail(search_q);
-//         if (search_q != q) {
-//             while(next != tail) {
-
-//                 if (depth && (next == deadlock_table[0])) {
-//                     return TRUE;
-//                 }
-
-//                 // in_deadlock_table = FALSE;
-//                 // for (j=1; deadlock_table[i]; j++) {
-//                 //     if (next == deadlock_table[i]) {
-//                 //         in_deadlock_table = TRUE;
-//                 //         break;
-//                 //     }
-//                 // }
-
-//                 // if (in_deadlock_table == FALSE) {
-//                     depth++;
-//                     if (depth == NALOCKS) {
-//                         depth--;
-//                         return FALSE; 
-//                     }
-//                     deadlock = detect_deadlock(next, search_q);
-//                     depth--;
-//                     if (deadlock) {
-//                         if (depth == 0) {
-//                             kprintf("Detected\n");
-//                         }
-//                         return TRUE;
-//                     }
-//                 // }
-//                 next = queuetab[next].qnext;
-//             }
-//         }
-//     }
-
-//     deadlock_table[depth] = 0;
-
-//     restore(mask);
-//     return FALSE;
-// }
-
 syscall detect_deadlock(pid32 pid, al_lock_t *l) {
     static uint32  depth = 0;
-    uint32  i;
+    uint32  i, j;
+    pid32   min;
+    uint32  min_index;
 
     if (proctab[pid].deadlock) {
         return OK;
@@ -107,17 +49,32 @@ syscall detect_deadlock(pid32 pid, al_lock_t *l) {
 
     deadlock_table[depth] = pid;
 
-    kprintf("depth=%d | ", depth);
-    for (i=0; deadlock_table[i]; i++) {
-        kprintf("%d, ", deadlock_table[i]);
-    }
-    kprintf("\n", depth);
+    // kprintf("depth=%d | ", depth);
+    // for (i=0; deadlock_table[i]; i++) {
+    //     kprintf("%d, ", deadlock_table[i]);
+    // }
+    // kprintf("\n", depth);
 
     if (l->owner == deadlock_table[0]) {
-        kprintf("Deadlock Detected!\n");
         for (i=0; deadlock_table[i]; i++) {
             proctab[deadlock_table[i]].deadlock = TRUE;
         }
+
+        kprintf("deadlock_detected=");
+        for (i=0; deadlock_table[i]; i++) {
+            min = NPROC;
+            for (j=0; deadlock_table[j]; j++) {
+                if (deadlock_table[j] < min) {
+                    min = deadlock_table[j];
+                    min_index = j;
+                }
+            }
+            deadlock_table[min_index] = NPROC;
+            if (i) kprintf("-");
+            kprintf("P%d", min);
+        }
+        kprintf("\n");
+
         deadlock_table[depth] = 0;
         return OK;
     }
