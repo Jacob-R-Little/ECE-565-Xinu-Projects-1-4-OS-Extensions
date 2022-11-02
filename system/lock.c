@@ -38,7 +38,7 @@ syscall setpark() {
 syscall initlock(lock_t *l) {
     static uint32 lock_num = 0;
 
-    if (lock_num == NSPINLOCKS) return SYSERR;
+    if (lock_num == NLOCKS) return SYSERR;
 
     l->owner = 0;
     l->flag = 0;
