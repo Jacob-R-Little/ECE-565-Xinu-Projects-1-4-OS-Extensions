@@ -1,41 +1,6 @@
 #include "xinu.h"
 
-al_lock_t al_locks[NALOCKS];
 pid32 deadlock_table[NALOCKS];
-uint32 al_lock_num = 0;
-
-syscall print_queue(qid16 q)
-{
-	intmask mask = disable();	/* Interrupt mask		*/
-	//qid16	next = firstid(q);
-    qid16	next = queuehead(q);
-	qid16	tail = queuetail(q);
-	
-
-	kprintf("QID: %d | ", q);
-
-	while(next != tail) {
-		kprintf("%d, ", (uint32)next);
-		next = queuetab[next].qnext;
-	}
-
-    kprintf("%d, ", (uint32)next);
-
-	kprintf("\n");
-
-	restore(mask);
-
-	return OK;
-}
-
-syscall lock_printf(char *fmt, ...)
-{
-        intmask mask = disable();
-        void *arg = __builtin_apply_args();
-        __builtin_apply((void*)kprintf, arg, 100);
-        restore(mask);
-        return OK;
-}
 
 syscall detect_deadlock(pid32 pid, al_lock_t *l) {
     static uint32  depth = 0;
@@ -48,12 +13,6 @@ syscall detect_deadlock(pid32 pid, al_lock_t *l) {
     }
 
     deadlock_table[depth] = pid;
-
-    // kprintf("depth=%d | ", depth);
-    // for (i=0; deadlock_table[i]; i++) {
-    //     kprintf("%d, ", deadlock_table[i]);
-    // }
-    // kprintf("\n", depth);
 
     if (l->owner == deadlock_table[0]) {
         for (i=0; deadlock_table[i]; i++) {
@@ -128,19 +87,16 @@ syscall al_setpark() {
 }
 
 syscall al_initlock(al_lock_t *l) {
-    intmask mask = disable();
-    
-    if (al_lock_num == NALOCKS) return SYSERR;
+    static uint32 lock_num = 0;
+
+    if (lock_num == NALOCKS) return SYSERR;
 
     l->owner = 0;
     l->flag = 0;
     l->guard = 0;
     l->q = newqueue();
-    // al_locks[al_lock_num] = l;
 
-    al_lock_num++;
-
-    restore(mask);
+    lock_num++;
     return OK;
 }
 
