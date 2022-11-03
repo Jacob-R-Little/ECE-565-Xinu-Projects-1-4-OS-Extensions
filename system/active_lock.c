@@ -1,51 +1,54 @@
 #include "xinu.h"
 
-pid32 deadlock_table[NALOCKS];
+syscall print_deadlock(pid32 table[]) {
+    uint32  i, j, min_index;
+    pid32   min;
+
+    kprintf("deadlock_detected=");
+
+    for (i=0; table[i]; i++) {
+        min = NPROC;
+        for (j=0; table[j]; j++) {
+            if (table[j] < min) {
+                min = table[j];
+                min_index = j;
+            }
+        }
+        table[min_index] = NPROC;
+        if (i) kprintf("-");
+        kprintf("P%d", min);
+    }
+
+    kprintf("\n");
+    
+    return OK;
+}
 
 syscall detect_deadlock(pid32 pid, al_lock_t *l) {
-    static uint32  depth = 0;
     uint32  i, j;
-    pid32   min;
-    uint32  min_index;
+    pid32 deadlock_table[NALOCKS] = {0};
 
-    if (proctab[pid].deadlock) {
-        return OK;
-    }
+    for (i=0; TRUE; i++) {
+        if (proctab[pid].deadlock) return OK;
 
-    deadlock_table[depth] = pid;
+        deadlock_table[i] = pid;
 
-    if (l->owner == deadlock_table[0]) {
-        for (i=0; deadlock_table[i]; i++) {
-            proctab[deadlock_table[i]].deadlock = TRUE;
+        if (l->owner == currpid) {
+            for (j=0; deadlock_table[j]; j++)
+                proctab[deadlock_table[j]].deadlock = TRUE;
+                
+            print_deadlock(deadlock_table);
+            return OK;
+        }
+        
+        if (proctab[l->owner].prstate == PR_LOCK) {
+            pid = l->owner;
+            l = proctab[l->owner].lock;
+            continue;
         }
 
-        kprintf("deadlock_detected=");
-        for (i=0; deadlock_table[i]; i++) {
-            min = NPROC;
-            for (j=0; deadlock_table[j]; j++) {
-                if (deadlock_table[j] < min) {
-                    min = deadlock_table[j];
-                    min_index = j;
-                }
-            }
-            deadlock_table[min_index] = NPROC;
-            if (i) kprintf("-");
-            kprintf("P%d", min);
-        }
-        kprintf("\n");
-
-        deadlock_table[depth] = 0;
         return OK;
     }
-
-    if (proctab[l->owner].prstate == PR_LOCK) {
-        depth++;
-        detect_deadlock(l->owner, proctab[l->owner].lock);
-        depth--;
-    }
-
-    deadlock_table[depth] = 0;
-    return OK;
 }
 
 syscall	al_park(al_lock_t *l) {
