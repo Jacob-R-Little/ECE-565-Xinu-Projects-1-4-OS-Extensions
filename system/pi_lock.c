@@ -3,8 +3,8 @@
 syscall print_queue(qid16 q)
 {
 	intmask mask = disable();	/* Interrupt mask		*/
-	//qid16	next = firstid(q);
-    qid16	next = queuehead(q);
+	qid16	next = firstid(q);
+    //qid16	next = queuehead(q);
 	qid16	tail = queuetail(q);
 	
 
@@ -14,8 +14,6 @@ syscall print_queue(qid16 q)
 		kprintf("%d, ", (uint32)next);
 		next = queuetab[next].qnext;
 	}
-
-    kprintf("%d, ", (uint32)next);
 
 	kprintf("\n");
 
@@ -70,12 +68,20 @@ syscall priority_inheritance(pi_lock_t *l) {
     return OK;
 }
 
-syscall priority_return() {
+syscall priority_return(pi_lock_t *l) {
     struct procent *ptcurr = &proctab[currpid];
+    uint32 i;
+    pri16 ret_prio = ptcurr->origprio;
+
     if (ptcurr->origprio) {
-        kprintf("priority_change=P%d::%d-%d\n", currpid, ptcurr->prprio, ptcurr->origprio);
-        ptcurr->prprio = ptcurr->origprio;
-        ptcurr->origprio = 0;
+        for (i=0; i<NPROC; i++) {
+            if ((proctab[i].pi_lock->owner == currpid) && (proctab[i].pi_lock != l) && (proctab[i].prprio > ret_prio)) {
+                ret_prio = proctab[i].prprio;
+            }
+        }
+        kprintf("priority_change=P%d::%d-%d\n", currpid, ptcurr->prprio, ret_prio);
+        ptcurr->prprio = ret_prio;
+        if (ret_prio == ptcurr->origprio) ptcurr->origprio = 0;
     }
     return OK;
 }
@@ -102,8 +108,9 @@ syscall pi_unpark(pi_lock_t *l) {
     proctab[pid].parkfl = 0;
     proctab[pid].prstate = PR_READY;
     proctab[pid].pi_lock = NULL;
-    priority_return();    
+    priority_return(l);
     insert(pid, readylist, proctab[pid].prprio);
+    l->guard = 0;
 
     restore(mask);
     return OK;
@@ -161,11 +168,11 @@ syscall pi_unlock(pi_lock_t *l) {
 
     if (isempty(l->q)) {
         l->flag = 0;
+        l->guard = 0;
     }
     else {
         pi_unpark(l);
     }
 
-    l->guard = 0;
     return OK;
 }
