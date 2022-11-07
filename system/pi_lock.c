@@ -33,11 +33,60 @@ syscall lock_printf(char *fmt, ...)
         return OK;
 }
 
-syscall	pi_park() {
+syscall fix_readylist(pid32 pid) {
+    qid16	next = firstid(readylist);
+	qid16	tail = queuetail(readylist);
+
+    while(next != tail) {
+        if (next == pid) {
+            getitem(pid);
+            insert(pid, readylist, proctab[pid].prprio);
+            return OK;
+        }
+		next = queuetab[next].qnext;
+	}
+    return OK;
+}
+
+syscall priority_inheritance(pi_lock_t *l) {
+    struct procent *ptcurr = &proctab[currpid];
+    struct procent *ptowner = &proctab[l->owner];
+    if (ptcurr->prprio > ptowner->prprio) {
+        while (ptcurr->pi_lock) {
+            kprintf("priority_change=P%d::%d-%d\n", l->owner, ptowner->prprio, ptcurr->prprio);
+            if (ptowner->origprio == 0)
+                ptowner->origprio = ptowner->prprio;   // save owner priority
+            ptowner->prprio = ptcurr->prprio;
+
+            // if in readylist, remove, then re-insert
+            fix_readylist(l->owner);
+
+            // check if owner is also waiting on a lock
+            l = ptowner->pi_lock;
+            ptcurr = ptowner;
+            ptowner = &proctab[l->owner];
+        }
+    }
+    return OK;
+}
+
+syscall priority_return() {
+    struct procent *ptcurr = &proctab[currpid];
+    if (ptcurr->origprio) {
+        kprintf("priority_change=P%d::%d-%d\n", currpid, ptcurr->prprio, ptcurr->origprio);
+        ptcurr->prprio = ptcurr->origprio;
+        ptcurr->origprio = 0;
+    }
+    return OK;
+}
+
+syscall	pi_park(pi_lock_t *l) {
 	intmask mask = disable();
 
     if (proctab[currpid].parkfl) {
         proctab[currpid].prstate = PR_LOCK;
+        proctab[currpid].pi_lock = l;
+        priority_inheritance(l);
 	    resched();
     }
 	
@@ -52,6 +101,8 @@ syscall pi_unpark(pi_lock_t *l) {
     l->owner = pid;
     proctab[pid].parkfl = 0;
     proctab[pid].prstate = PR_READY;
+    proctab[pid].pi_lock = NULL;
+    priority_return();    
     insert(pid, readylist, proctab[pid].prprio);
 
     restore(mask);
@@ -94,7 +145,7 @@ syscall pi_lock(pi_lock_t *l) {
         enqueue(currpid, l->q);
         pi_setpark();
         l->guard = 0;
-        pi_park();
+        pi_park(l);
     }
     
     return OK;
