@@ -191,6 +191,12 @@ static	void	sysinit()
 	prptr->prstkbase = getstk(NULLSTK);
 	prptr->prstklen = NULLSTK;
 	prptr->prstkptr = 0;
+	prptr->runtime = 0;
+	prptr->parkfl = 0;	
+	prptr->lock = NULL;
+	prptr->pi_lock = NULL;
+	prptr->deadlock = FALSE;
+	prptr->origprio = 0;
 	currpid = NULLPROC;
 	
 	/* Initialize semaphores */

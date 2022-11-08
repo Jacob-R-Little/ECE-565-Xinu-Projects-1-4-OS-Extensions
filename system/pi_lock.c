@@ -1,36 +1,5 @@
 #include "xinu.h"
 
-syscall print_queue(qid16 q)
-{
-	intmask mask = disable();	/* Interrupt mask		*/
-	qid16	next = firstid(q);
-    //qid16	next = queuehead(q);
-	qid16	tail = queuetail(q);
-	
-
-	kprintf("QID: %d | ", q);
-
-	while(next != tail) {
-		kprintf("%d, ", (uint32)next);
-		next = queuetab[next].qnext;
-	}
-
-	kprintf("\n");
-
-	restore(mask);
-
-	return OK;
-}
-
-syscall lock_printf(char *fmt, ...)
-{
-        intmask mask = disable();
-        void *arg = __builtin_apply_args();
-        __builtin_apply((void*)kprintf, arg, 100);
-        restore(mask);
-        return OK;
-}
-
 syscall fix_readylist(pid32 pid) {
     qid16	next = firstid(readylist);
 	qid16	tail = queuetail(readylist);
@@ -52,14 +21,14 @@ syscall priority_inheritance(pi_lock_t *l) {
     if (ptcurr->prprio > ptowner->prprio) {
         while (ptcurr->pi_lock) {
             kprintf("priority_change=P%d::%d-%d\n", l->owner, ptowner->prprio, ptcurr->prprio);
-            if (ptowner->origprio == 0)
+            if (ptowner->origprio == 0)     // don't save owner priority if it has been saved before
                 ptowner->origprio = ptowner->prprio;   // save owner priority
-            ptowner->prprio = ptcurr->prprio;
+            ptowner->prprio = ptcurr->prprio;   // transfer priority
 
-            // if in readylist, remove, then re-insert
+            // if in readylist, remove, then re-insert to fix order
             fix_readylist(l->owner);
 
-            // check if owner is also waiting on a lock
+            // check if owner is also waiting on a lock and needs it's priority boosted
             l = ptowner->pi_lock;
             ptcurr = ptowner;
             ptowner = &proctab[l->owner];
@@ -73,14 +42,22 @@ syscall priority_return(pi_lock_t *l) {
     uint32 i;
     pri16 ret_prio = ptcurr->origprio;
 
+    // if priority has been boosted, return priority
     if (ptcurr->origprio) {
+
+        // if this process is the owner of another lock (or multiple)
+        // check to see if that lock should cause a priority boost
+        // and if so, give it the highest priority found
         for (i=0; i<NPROC; i++) {
             if ((proctab[i].pi_lock->owner == currpid) && (proctab[i].pi_lock != l) && (proctab[i].prprio > ret_prio)) {
                 ret_prio = proctab[i].prprio;
             }
         }
+        
         kprintf("priority_change=P%d::%d-%d\n", currpid, ptcurr->prprio, ret_prio);
         ptcurr->prprio = ret_prio;
+
+        // only set origprio to 0 if it was used above
         if (ret_prio == ptcurr->origprio) ptcurr->origprio = 0;
     }
     return OK;

@@ -54,6 +54,15 @@ pid32	create(
 	prptr->prdesc[0] = CONSOLE;
 	prptr->prdesc[1] = CONSOLE;
 	prptr->prdesc[2] = CONSOLE;
+	
+	/* Initialize lock items	*/
+
+	prptr->runtime = 0;
+	prptr->parkfl = 0;	
+	prptr->lock = NULL;
+	prptr->pi_lock = NULL;
+	prptr->deadlock = FALSE;
+	prptr->origprio = 0;
 
 	/* Initialize stack as if the process was called		*/
 

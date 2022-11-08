@@ -28,12 +28,18 @@ syscall detect_deadlock(pid32 pid, al_lock_t *l) {
     uint32  i, j;
     pid32 deadlock_table[NALOCKS] = {0};
 
+    // try to find circular dependencies
     for (i=0; TRUE; i++) {
+        // if a process is already deadlocked, no need to look further
         if (proctab[pid].deadlock) return OK;
 
+        // save PIDs in an array in order of traversal
         deadlock_table[i] = pid;
 
+        // if the owner of the lock is equal to the current process
+        // a circular dependency has been found
         if (l->owner == currpid) {
+            // declare all processes in circle as deadlocked
             for (j=0; deadlock_table[j]; j++)
                 proctab[deadlock_table[j]].deadlock = TRUE;
                 
@@ -41,12 +47,15 @@ syscall detect_deadlock(pid32 pid, al_lock_t *l) {
             return OK;
         }
         
+        // if the owner of the current lock is also waiting on a lock
+        // continue checking for circlular dependencies on that lock
         if (proctab[l->owner].prstate == PR_LOCK) {
             pid = l->owner;
             l = proctab[l->owner].lock;
             continue;
         }
 
+        // otherwise no deadlock detected
         return OK;
     }
 }
@@ -151,7 +160,7 @@ bool8 al_trylock(al_lock_t *l) {
         l->guard = 0;
         return TRUE;
     }
-    
+
     l->guard = 0;
     return FALSE;
 }

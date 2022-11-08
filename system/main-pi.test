@@ -46,20 +46,12 @@ process p_lock(pi_lock_t *l){
 	pi_unlock(l);		
 	return OK;
 }
-
-process p_endless(){
-	while(TRUE) {
-		xsh_ps(1);
-		run_for_ms(3000);
-	}
-	return OK;
-}
 	
 process	main(void)
 {
 	
 	pi_lock_t 	m1, m2, m3;  		
-	pid32		pid1, pid2, pid3, pid4, pid5;
+	pid32		pid1, pid2, pid3, pid4;
 	uint32 		timestamp;
 
 	pi_initlock(&m1);
@@ -84,7 +76,7 @@ process	main(void)
 
         kprintf("Time = %d ms\n", get_timestamp()-timestamp);
 
-	kprintf("\n\n=========== TEST 2: Priority Inversion with 3 threads / 2 mutexes ===============\n\n");
+	kprintf("\n\n=========== TEST 2: Priority Inversion with 3 threads / 2 mutexes demonstrating transitivity ===============\n\n");
 
         pid1 = create((void *)p_lock, INITSTK, 1,"nthreads", 1, &m1);
         pid2 = create((void *)p_double_lock, INITSTK, 2,"nthreads", 2, &m2, &m1);
@@ -104,13 +96,12 @@ process	main(void)
 
         kprintf("Time = %d ms\n", get_timestamp()-timestamp);
         
-	kprintf("\n\n=========== TEST 3: Priority Inversion with 4 threads / 3 mutexes  ===============\n\n");
+	kprintf("\n\n=========== TEST 3: Priority Inversion with 4 threads / 3 mutexes demonstrating transitivity ===============\n\n");
 
         pid1 = create((void *)p_lock, INITSTK, 1,"nthreads", 1, &m1);
         pid2 = create((void *)p_double_lock, INITSTK, 2,"nthreads", 2, &m2, &m1);
 		pid3 = create((void *)p_double_lock, INITSTK, 3,"nthreads", 2, &m3, &m2);
 		pid4 = create((void *)p_lock, INITSTK, 4,"nthreads", 1, &m3);
-		// pid5 = create((void *)p_endless, INITSTK, 3,"nthreads", 0);
 
         timestamp = get_timestamp();
 
@@ -121,8 +112,6 @@ process	main(void)
         resume(pid3);
 		sleepms(100);
         resume(pid4);
-		// sleepms(100);
-        // resume(pid5);
 
         receive();
         receive();
