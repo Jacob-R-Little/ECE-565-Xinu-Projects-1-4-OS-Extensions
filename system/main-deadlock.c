@@ -1,6 +1,9 @@
 /*  main.c  - main */
 
 #include <xinu.h>
+#include <stdlib.h>
+
+uint32 x[6] = {0};
 
 syscall sync_printf(char *fmt, ...)
 {
@@ -11,79 +14,117 @@ syscall sync_printf(char *fmt, ...)
         return OK;
 }
 
-uint32 get_timestamp(){
-	return ctr1000;
-}
-
 void run_for_ms(uint32 time){
 	uint32 start = proctab[currpid].runtime;
 	while ((proctab[currpid].runtime-start) < time);
 }
 
-process p2(al_lock_t *l1, al_lock_t *l2){
+process p2(al_lock_t *l1, al_lock_t *l2, uint32 index1, uint32 index2){
 	al_lock(l1);
-	run_for_ms(1000);
-	al_lock(l2);		
-	run_for_ms(1000);
+
+	run_for_ms(500);
+	x[index1]++;
+
+	al_lock(l2);
+
+	run_for_ms(500);
+	x[index1]++;
+	x[index2]++;
+
 	al_unlock(l1);
-	run_for_ms(1000);
+
+	run_for_ms(500);
+
+	x[index2]++;
+
 	al_unlock(l2);		
-	run_for_ms(1000);
 	return OK;
+}
+
+process p2_try(al_lock_t *l1, al_lock_t *l2, uint32 index1, uint32 index2){
+	while (TRUE) {
+		if (al_trylock(l1) == FALSE) {
+			sleepms(10 * (rand() % 20));	// wait between 10 - 200 ms
+			continue; 		// try to acquire the lock again
+		}
+
+		run_for_ms(500);
+		x[index1]++;
+
+		if (al_trylock(l2) == FALSE) {
+			run_for_ms(100);	// theoretical cleenup
+			x[index1]--;
+			al_unlock(l1);	// release previously held lock
+			sleepms(10 * (rand() % 20));	// wait between 10 - 200 ms
+			continue;		// restart execution
+		}
+
+		run_for_ms(500);
+		x[index1]++;
+		x[index2]++;
+
+		al_unlock(l1);
+
+		run_for_ms(500);
+		x[index2]++;
+
+		al_unlock(l2);
+		return OK;
+	}
 }
 	
 process	main(void)
 {	
-	pid32 pid1, pid2, pid3;		// threads 
-	al_lock_t m1, m2, m3;		// mutexes
-	uint32 		timestamp;
+	pid32 pid[6];		// threads 
+	al_lock_t mutex[6];		// mutexes
+	uint32 i;
+	bool8 try_passed = TRUE;
 	
 	/* initialize al_locks */
-	al_initlock(&m1);
-	al_initlock(&m2);
-	al_initlock(&m3);
+	for (i=0; i<6; i++) al_initlock(&mutex[i]);
 
 	kprintf("\n\n=========== TEST 1: Deadlock on 3 threads  ===================\n\n");
 
-		/* first deadlock: 2 threads */	
-		pid1 = create((void *)p2, INITSTK, 5, "p2", 2, &m1, &m2);
-		pid2 = create((void *)p2, INITSTK, 5, "p2", 2, &m3, &m2);
-		pid3 = create((void *)p2, INITSTK, 5, "p2", 2, &m3, &m1);
+		for (i=0; i<3; i++)
+			pid[i] = create((void *)p2, INITSTK, 5, "p2", 4, &mutex[i], &mutex[(i + 2) % 3], i, (i + 2) % 3);
 
-		timestamp = get_timestamp();
+		kprintf("Deadlock expected:\n\n");
 
-		resume(pid1);
-		sleepms(100);
-		resume(pid2);
-		sleepms(100);
-		resume(pid3);
+		for (i=0; i<3; i++) {
+			resume(pid[i]);
+			sleepms(100);
+		}
 
-		receive();
-		receive();
-		receive();
+		while (proctab[pid[0]].deadlock == FALSE) sleepms(1000);
 
-		kprintf("Time = %d ms\n", get_timestamp()-timestamp);
+		kprintf("\nTEST PASSED\n");
 
 	kprintf("\n\n=========== TEST 2: Deadlock on 3 threads circumvented by trylock  ===================\n\n");
-	
-		/* first deadlock: 2 threads */	
-		pid1 = create((void *)p2, INITSTK, 5, "p2", 2, &m1, &m2);
-		pid2 = create((void *)p2, INITSTK, 5, "p2", 2, &m[1], &mutex[0]);
-		pid3 = create((void *)p2, INITSTK, 5, "p2", 2, &mutex[1], &mutex[0]);
 
-		timestamp = get_timestamp();
+		for (i=3; i<6; i++)
+			pid[i] = create((void *)p2_try, INITSTK, 5, "p2", 4, &mutex[i], &mutex[(i + 2) % 3 + 3], i, (i + 2) % 3 + 3);
 
-		resume(pid1);
-		sleepms(100);
-		resume(pid2);
-		sleepms(100);
-		resume(pid3);
+		kprintf("This might take a bit due to randomness in time to prevent unwanted phase behavior\n\n");
 
-		receive();
-		receive();
-		receive();
+		for (i=3; i<6; i++) {
+			resume(pid[i]);
+			sleepms(100);
+		}
 
-		kprintf("Time = %d ms\n", get_timestamp()-timestamp);
+		for (i=0; i<3; i++) receive();
+
+		kprintf("All Processes Completed, Deadlock Avoided!\n\n");
+
+		kprintf("All x values should be equal to 4:\n");
+
+		for (i=3; i<6; i++) kprintf("x[%d] = %d\n", i, x[i]);
+
+		for (i=3; i<6; i++)
+			if (x[i] != 4) try_passed = FALSE;
+
+		if (try_passed) kprintf("TEST PASSED\n");
+		else kprintf("TEST FAILED\n");
+
 
 	return OK;
 }

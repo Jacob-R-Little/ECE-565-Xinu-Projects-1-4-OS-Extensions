@@ -152,5 +152,6 @@ bool8 al_trylock(al_lock_t *l) {
         return TRUE;
     }
     
+    l->guard = 0;
     return FALSE;
 }
