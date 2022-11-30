@@ -243,54 +243,32 @@ static	void	sysinit()
 	}
 
 	/* Initialize Xinu Pages */
+	
+	uint32 index;
+	phy_addr_t xinu_addr;
 
-	pt_t xinu_pt;
-	xinu_pt.pt_pres		= 1;		/* page is present?		*/
-	xinu_pt.pt_write 	= 1;		/* page is writable?		*/
-	xinu_pt.pt_user		= 0;		/* is use level protection?	*/
-	xinu_pt.pt_pwt		= 1;		/* write through for this page? */
-	xinu_pt.pt_pcd		= 1;		/* cache disable for this page? */
-	xinu_pt.pt_acc		= 1;		/* page was accessed?		*/
-	xinu_pt.pt_dirty 	= 0;		/* page was written?		*/
-	xinu_pt.pt_mbz		= 0;		/* must be zero			*/
-	xinu_pt.pt_global	= 0;		/* should be zero in 586	*/
-	xinu_pt.pt_avail 	= 0;		/* for programmer's use		*/
-	xinu_pt.pt_base		= 0;		/* location of page?		*/
-
-	for (i = 1; i < 9; i++) {
+	for (i = 0; i < 8; i++) {
+		index = new_PD_PT();
 		for (j = 0; j < 1024; j++) {
-			xinu_pt.pt_base = (i - 1) * 1024 + j;
-			*(pt_t *)((page_list[i].addr.fm_num << 12) + page_list[i].addr.fm_offset + (j << 2)) = xinu_pt;
+			xinu_addr.fm_num = i * 1024 + j;
+			new_PTE(index, xinu_addr);
 		}
-		page_list[i].valid = TRUE;
 	}
 
 	/* Initialize System Page Directory */
-	pd_t system_pd;
-	system_pd.pd_pres 	= 1;		/* page table present?		*/
-	system_pd.pd_write 	= 1;		/* page is writable?		*/
-	system_pd.pd_user 	= 0;		/* is use level protection?	*/
-	system_pd.pd_pwt 	= 1;		/* write through cachine for pt?*/
-	system_pd.pd_pcd	= 1;		/* cache disable for this pt?	*/
-	system_pd.pd_acc	= 1;		/* page table was accessed?	*/
-	system_pd.pd_mbz	= 0;		/* must be zero			*/
-	system_pd.pd_fmb	= 0;		/* four MB pages?		*/
-	system_pd.pd_global	= 0;		/* global (ignored)		*/
-	system_pd.pd_avail 	= 0;		/* for programmer's use		*/
-	system_pd.pd_base	= 0;		/* location of page table?	*/
 
-	page_list[0].valid = TRUE;
+	index = new_PD_PT();
 
-	for (i = 1; i < 9; i++) {
-		system_pd.pd_base = page_list[i].addr.fm_num;
-		*(pd_t *)((page_list[0].addr.fm_num << 12) + page_list[0].addr.fm_offset + (i << 2)) = system_pd;
+	for (i = 0; i < 8; i++) {
+		xinu_addr.fm_num = page_list[i].addr.fm_num;
+		new_PDE(index, xinu_addr);
 	}
 
-	prptr->page_dir = page_list[0].addr;
+	prptr->page_dir = page_list[index].addr;
 	set_PDBR(prptr->page_dir);
-	kprintf("About to start paging\n");
-	enable_paging();
-	kprintf("We paging now\n");
+	// kprintf("About to start paging\n");
+	// enable_paging();
+	// kprintf("We paging now\n");
 
 	return;
 }

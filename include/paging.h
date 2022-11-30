@@ -23,7 +23,8 @@ typedef struct {
   unsigned int pd_mbz	: 1;		/* must be zero			*/
   unsigned int pd_fmb	: 1;		/* four MB pages?		*/
   unsigned int pd_global: 1;		/* global (ignored)		*/
-  unsigned int pd_avail : 3;		/* for programmer's use		*/
+  unsigned int pt_valid : 1;
+  unsigned int pd_avail : 2;		/* for programmer's use		*/
   unsigned int pd_base	: 20;		/* location of page table?	*/
 } pd_t;
 
@@ -40,7 +41,8 @@ typedef struct {
   unsigned int pt_dirty : 1;		/* page was written?		*/
   unsigned int pt_mbz	: 1;		/* must be zero			*/
   unsigned int pt_global: 1;		/* should be zero in 586	*/
-  unsigned int pt_avail : 3;		/* for programmer's use		*/
+  unsigned int pt_valid : 1;  
+  unsigned int pt_avail : 2;		/* for programmer's use		*/
   unsigned int pt_base	: 20;		/* location of page?		*/
 } pt_t;
 
@@ -81,9 +83,19 @@ void pagefault_handler();
 
 void set_PDBR(phy_addr_t addr);
 
-void new_PD(phy_addr_t addr)
+uint32 new_PD_PT();
 
-void new_PT(phy_addr_t addr)
+uint32 new_PDE(uint32 pg_dir, phy_addr_t addr);
+
+uint32 new_PTE(uint32 pg_tab, phy_addr_t addr);
+
+void set_PDE(uint32 pg_dir, uint32 entry, pd_t pde);
+
+void set_PTE(uint32 pg_tab, uint32 entry, pt_t pte);
+
+pd_t get_PDE(uint32 pg_dir, uint32 entry);
+
+pt_t get_PTE(uint32 pg_tab, uint32 entry);
 
 typedef struct {
   phy_addr_t addr;

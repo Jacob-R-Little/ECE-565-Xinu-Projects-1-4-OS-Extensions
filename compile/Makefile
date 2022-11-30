@@ -185,6 +185,12 @@ stop_vm:
 	VBoxManage controlvm "backend" poweroff
 
 restart_vm:
-	VBoxManage controlvm "backend" reset 
+	VBoxManage controlvm "backend" reset
+
+every:
+	make clean
+	make
+	VBoxManage controlvm "backend" poweroff
+	VBoxManage startvm "backend" -type headless
 
 -include $(DEPSFILE)
