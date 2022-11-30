@@ -10,7 +10,6 @@
 #define MAX_SWAP_SIZE   32*1024 /* size of swap space  (in frames)                       */
 #define MAX_PT_SIZE     1024    /* size of space used for page tables (in frames)        */
 
-
 /* Structure for a page directory entry */
 
 typedef struct {
@@ -79,5 +78,20 @@ void write_cr4(unsigned long n);
 void enable_paging();
 
 void pagefault_handler();
+
+void set_PDBR(phy_addr_t addr);
+
+void new_PD(phy_addr_t addr)
+
+void new_PT(phy_addr_t addr)
+
+typedef struct {
+  phy_addr_t addr;
+  bool8 valid;
+} mem_info_t;
+
+mem_info_t swap_list [MAX_SWAP_SIZE];
+mem_info_t page_list [MAX_PT_SIZE];
+mem_info_t frame_list [MAX_FFS_SIZE];
 
 #endif

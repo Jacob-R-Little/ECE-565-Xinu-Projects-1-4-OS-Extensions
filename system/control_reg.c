@@ -186,3 +186,15 @@ void enable_paging(){
   write_cr0(temp); 
 
 }
+
+/*-------------------------------------------------------------------------
+ * set_PDBR - sets the value of PDBR through CR3 while preserving LSBs 
+ *-------------------------------------------------------------------------
+ */
+void set_PDBR(phy_addr_t addr) {
+
+  unsigned long temp =  read_cr3();
+  temp = temp | (addr.fm_num << 12);
+  write_cr3(temp);
+
+}

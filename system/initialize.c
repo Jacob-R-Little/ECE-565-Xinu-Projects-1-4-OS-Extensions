@@ -145,7 +145,7 @@ local process	startup(void)
  */
 static	void	sysinit()
 {
-	int32	i;
+	int32	i, j;
 	struct	procent	*prptr;		/* Ptr to process table entry	*/
 	struct	sentry	*semptr;	/* Ptr to semaphore table entry	*/
 
@@ -191,6 +191,8 @@ static	void	sysinit()
 	prptr->prstkbase = getstk(NULLSTK);
 	prptr->prstklen = NULLSTK;
 	prptr->prstkptr = 0;
+	prptr->page_dir.fm_num = 0;		// updated right before enabling paging
+	prptr->page_dir.fm_offset = 0;
 	currpid = NULLPROC;
 	
 	/* Initialize semaphores */
@@ -222,6 +224,74 @@ static	void	sysinit()
 	for (i = 0; i < NDEVS; i++) {
 		init(i);
 	}
+
+	/* Initialize arrays to store memory information */
+
+	for (i = 0; i < MAX_FFS_SIZE; i++) {
+		frame_list[i].addr.fm_num = XINU_PAGES + i;
+		frame_list[i].valid = FALSE;
+	}
+
+	for (i = 0; i < MAX_PT_SIZE; i++) {
+		page_list[i].addr.fm_num = XINU_PAGES + MAX_FFS_SIZE + i;
+		page_list[i].valid = FALSE;
+	}
+
+	for (i = 0; i < MAX_SWAP_SIZE; i++) {
+		swap_list[i].addr.fm_num = XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE + i;
+		swap_list[i].valid = FALSE;
+	}
+
+	/* Initialize Xinu Pages */
+
+	pt_t xinu_pt;
+	xinu_pt.pt_pres		= 1;		/* page is present?		*/
+	xinu_pt.pt_write 	= 1;		/* page is writable?		*/
+	xinu_pt.pt_user		= 0;		/* is use level protection?	*/
+	xinu_pt.pt_pwt		= 1;		/* write through for this page? */
+	xinu_pt.pt_pcd		= 1;		/* cache disable for this page? */
+	xinu_pt.pt_acc		= 1;		/* page was accessed?		*/
+	xinu_pt.pt_dirty 	= 0;		/* page was written?		*/
+	xinu_pt.pt_mbz		= 0;		/* must be zero			*/
+	xinu_pt.pt_global	= 0;		/* should be zero in 586	*/
+	xinu_pt.pt_avail 	= 0;		/* for programmer's use		*/
+	xinu_pt.pt_base		= 0;		/* location of page?		*/
+
+	for (i = 1; i < 9; i++) {
+		for (j = 0; j < 1024; j++) {
+			xinu_pt.pt_base = (i - 1) * 1024 + j;
+			*(pt_t *)((page_list[i].addr.fm_num << 12) + page_list[i].addr.fm_offset + (j << 2)) = xinu_pt;
+		}
+		page_list[i].valid = TRUE;
+	}
+
+	/* Initialize System Page Directory */
+	pd_t system_pd;
+	system_pd.pd_pres 	= 1;		/* page table present?		*/
+	system_pd.pd_write 	= 1;		/* page is writable?		*/
+	system_pd.pd_user 	= 0;		/* is use level protection?	*/
+	system_pd.pd_pwt 	= 1;		/* write through cachine for pt?*/
+	system_pd.pd_pcd	= 1;		/* cache disable for this pt?	*/
+	system_pd.pd_acc	= 1;		/* page table was accessed?	*/
+	system_pd.pd_mbz	= 0;		/* must be zero			*/
+	system_pd.pd_fmb	= 0;		/* four MB pages?		*/
+	system_pd.pd_global	= 0;		/* global (ignored)		*/
+	system_pd.pd_avail 	= 0;		/* for programmer's use		*/
+	system_pd.pd_base	= 0;		/* location of page table?	*/
+
+	page_list[0].valid = TRUE;
+
+	for (i = 1; i < 9; i++) {
+		system_pd.pd_base = page_list[i].addr.fm_num;
+		*(pd_t *)((page_list[0].addr.fm_num << 12) + page_list[0].addr.fm_offset + (i << 2)) = system_pd;
+	}
+
+	prptr->page_dir = page_list[0].addr;
+	set_PDBR(prptr->page_dir);
+	kprintf("About to start paging\n");
+	enable_paging();
+	kprintf("We paging now\n");
+
 	return;
 }
 
