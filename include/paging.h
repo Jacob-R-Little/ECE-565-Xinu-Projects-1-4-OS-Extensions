@@ -61,42 +61,6 @@ typedef struct{
   unsigned int fm_num : 20;		/* frame number			*/
 } phy_addr_t;
 
-/* Functions to manipulate control registers and enable paging (see control_reg.c)	 */
-
-unsigned long read_cr0(void);
-
-unsigned long read_cr2(void);
-
-unsigned long read_cr3(void);
-
-unsigned long read_cr4(void);
-
-void write_cr0(unsigned long n);
-
-void write_cr3(unsigned long n);
-
-void write_cr4(unsigned long n);
-
-void enable_paging();
-
-void pagefault_handler();
-
-void set_PDBR(phy_addr_t addr);
-
-uint32 new_PD_PT();
-
-uint32 new_PDE(uint32 pg_dir, phy_addr_t addr);
-
-uint32 new_PTE(uint32 pg_tab, phy_addr_t addr);
-
-void set_PDE(uint32 pg_dir, uint32 entry, pd_t pde);
-
-void set_PTE(uint32 pg_tab, uint32 entry, pt_t pte);
-
-pd_t get_PDE(uint32 pg_dir, uint32 entry);
-
-pt_t get_PTE(uint32 pg_tab, uint32 entry);
-
 typedef struct {
   phy_addr_t addr;
   bool8 valid;
@@ -105,5 +69,33 @@ typedef struct {
 mem_info_t swap_list [MAX_SWAP_SIZE];
 mem_info_t page_list [MAX_PT_SIZE];
 mem_info_t frame_list [MAX_FFS_SIZE];
+
+/* Functions to manipulate control registers and enable paging (see control_reg.c)	 */
+
+unsigned long read_cr0(void);
+unsigned long read_cr2(void);
+unsigned long read_cr3(void);
+unsigned long read_cr4(void);
+void write_cr0(unsigned long n);
+void write_cr3(unsigned long n);
+void write_cr4(unsigned long n);
+void enable_paging();
+void pagefault_handler();
+void set_PDBR(phy_addr_t addr);
+
+/* functions for paging operation */
+
+void init_paging(void);
+uint32 new_PD_PT(void);
+uint32 new_PDE(uint32 pg_dir, phy_addr_t addr);
+uint32 new_PTE(uint32 pg_tab, phy_addr_t addr);
+void set_PDE(uint32 pg_dir, uint32 entry, pd_t pde);
+void set_PTE(uint32 pg_tab, uint32 entry, pt_t pte);
+pd_t get_PDE(uint32 pg_dir, uint32 entry);
+pt_t get_PTE(uint32 pg_tab, uint32 entry);
+
+/* functions for paging debug */
+
+void debug_print(char *fmt, ...);
 
 #endif

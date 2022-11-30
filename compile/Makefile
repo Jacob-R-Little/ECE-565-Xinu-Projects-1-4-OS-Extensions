@@ -190,7 +190,7 @@ restart_vm:
 every:
 	make clean
 	make
-	VBoxManage controlvm "backend" poweroff
+	VBoxManage controlvm "backend" poweroff || true
 	VBoxManage startvm "backend" -type headless
 
 -include $(DEPSFILE)

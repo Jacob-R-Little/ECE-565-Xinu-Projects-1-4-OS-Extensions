@@ -145,7 +145,7 @@ local process	startup(void)
  */
 static	void	sysinit()
 {
-	int32	i, j;
+	int32	i;
 	struct	procent	*prptr;		/* Ptr to process table entry	*/
 	struct	sentry	*semptr;	/* Ptr to semaphore table entry	*/
 
@@ -224,51 +224,8 @@ static	void	sysinit()
 	for (i = 0; i < NDEVS; i++) {
 		init(i);
 	}
-
-	/* Initialize arrays to store memory information */
-
-	for (i = 0; i < MAX_FFS_SIZE; i++) {
-		frame_list[i].addr.fm_num = XINU_PAGES + i;
-		frame_list[i].valid = FALSE;
-	}
-
-	for (i = 0; i < MAX_PT_SIZE; i++) {
-		page_list[i].addr.fm_num = XINU_PAGES + MAX_FFS_SIZE + i;
-		page_list[i].valid = FALSE;
-	}
-
-	for (i = 0; i < MAX_SWAP_SIZE; i++) {
-		swap_list[i].addr.fm_num = XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE + i;
-		swap_list[i].valid = FALSE;
-	}
-
-	/* Initialize Xinu Pages */
 	
-	uint32 index;
-	phy_addr_t xinu_addr;
-
-	for (i = 0; i < 8; i++) {
-		index = new_PD_PT();
-		for (j = 0; j < 1024; j++) {
-			xinu_addr.fm_num = i * 1024 + j;
-			new_PTE(index, xinu_addr);
-		}
-	}
-
-	/* Initialize System Page Directory */
-
-	index = new_PD_PT();
-
-	for (i = 0; i < 8; i++) {
-		xinu_addr.fm_num = page_list[i].addr.fm_num;
-		new_PDE(index, xinu_addr);
-	}
-
-	prptr->page_dir = page_list[index].addr;
-	set_PDBR(prptr->page_dir);
-	// kprintf("About to start paging\n");
-	// enable_paging();
-	// kprintf("We paging now\n");
+	init_paging();
 
 	return;
 }
