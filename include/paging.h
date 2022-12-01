@@ -23,7 +23,7 @@ typedef struct {
   unsigned int pd_mbz	: 1;		/* must be zero			*/
   unsigned int pd_fmb	: 1;		/* four MB pages?		*/
   unsigned int pd_global: 1;		/* global (ignored)		*/
-  unsigned int pt_valid : 1;
+  unsigned int pd_valid : 1;
   unsigned int pd_avail : 2;		/* for programmer's use		*/
   unsigned int pd_base	: 20;		/* location of page table?	*/
 } pd_t;
@@ -86,6 +86,7 @@ void set_PDBR(phy_addr_t addr);
 /* functions for paging operation */
 
 void init_paging(void);
+void init_PD(pid32 pid);
 uint32 new_PD_PT(void);
 uint32 new_PDE(uint32 pg_dir, phy_addr_t addr);
 uint32 new_PTE(uint32 pg_tab, phy_addr_t addr);
@@ -93,6 +94,14 @@ void set_PDE(uint32 pg_dir, uint32 entry, pd_t pde);
 void set_PTE(uint32 pg_tab, uint32 entry, pt_t pte);
 pd_t get_PDE(uint32 pg_dir, uint32 entry);
 pt_t get_PTE(uint32 pg_tab, uint32 entry);
+pid32	vcreate(void *, uint32, pri16, char *, uint32, ...);
+char* vmalloc(uint32);
+syscall vfree(char*, uint32);
+uint32 free_ffs_pages();
+uint32 free_swap_pages();
+uint32 allocated_virtual_pages(pid32);
+uint32 used_ffs_frames(pid32);
+
 
 /* functions for paging debug */
 

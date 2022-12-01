@@ -3,10 +3,10 @@
 #include <xinu.h>
 
 /*------------------------------------------------------------------------
- *  create  -  Create a process to start running a function on x86
+ *  vcreate  -  Create a user process to start running a function on x86
  *------------------------------------------------------------------------
  */
-pid32	create(
+pid32	vcreate(
 	  void		*funcaddr,	/* Address of the function	*/
 	  uint32	ssize,		/* Stack size in bytes		*/
 	  pri16		priority,	/* Process priority > 0		*/
@@ -48,6 +48,8 @@ pid32	create(
 	prptr->prparent = (pid32)getpid();
 	prptr->prhasmsg = FALSE;
 
+	init_PD(pid);
+
 	/* Set up stdin, stdout, and stderr descriptors for the shell	*/
 	prptr->prdesc[0] = CONSOLE;
 	prptr->prdesc[1] = CONSOLE;
@@ -57,10 +59,6 @@ pid32	create(
 
 	*saddr = STACKMAGIC;
 	savsp = (uint32)saddr;
-
-	/* Set page directory to system page directory */
-
-	prptr->page_dir = proctab[NULLPROC].page_dir;	// page directory of null process
 
 	/* Push arguments */
 	a = (uint32 *)(&nargs + 1);	/* Start of args		*/
@@ -97,27 +95,4 @@ pid32	create(
 	*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
 	restore(mask);
 	return pid;
-}
-
-/*------------------------------------------------------------------------
- *  newpid  -  Obtain a new (free) process ID
- *------------------------------------------------------------------------
- */
-pid32	newpid(void)
-{
-	uint32	i;			/* Iterate through all processes*/
-	static	pid32 nextpid = 1;	/* Position in table to try or	*/
-					/*   one beyond end of table	*/
-
-	/* Check all NPROC slots */
-
-	for (i = 0; i < NPROC; i++) {
-		nextpid %= NPROC;	/* Wrap around to beginning */
-		if (proctab[nextpid].prstate == PR_FREE) {
-			return nextpid++;
-		} else {
-			nextpid++;
-		}
-	}
-	return (pid32) SYSERR;
 }

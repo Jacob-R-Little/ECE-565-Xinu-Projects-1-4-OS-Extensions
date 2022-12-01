@@ -23,9 +23,9 @@ void init_paging(void) {
 		swap_list[i].valid = FALSE;
 	}
 
-	/* Initialize Xinu Pages */	
+	/* Initialize Xinu Pages, FFS Pages, PT Pages, and Swap Pages */	
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < ((XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE + MAX_SWAP_SIZE) >> 10); i++) {
 		index = new_PD_PT();
 		for (j = 0; j < 1024; j++) {
 			xinu_addr.fm_num = i * 1024 + j;
@@ -35,18 +35,34 @@ void init_paging(void) {
 
 	/* Initialize System Page Directory */
 
-	index = new_PD_PT();
+	index = new_PD_PT();	//create a new page directory for system
 
-	for (i = 0; i < 8; i++) {
+	proctab[currpid].page_dir = page_list[index].addr;
+
+	//initialize the new page directory with xinu pages, FFS pages, PT pages, and Swap pages
+	for (i = 0; i < ((XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE + MAX_SWAP_SIZE) >> 10); i++) {
 		xinu_addr.fm_num = page_list[i].addr.fm_num;
 		new_PDE(index, xinu_addr);
 	}
 
-	proctab[currpid].page_dir = page_list[index].addr;
 	set_PDBR(proctab[currpid].page_dir);
 	debug_print("About to start paging\n");
 	enable_paging();
 	debug_print("We paging now\n");
+}
+
+void init_PD(pid32 pid) {
+	uint32 i;
+	phy_addr_t xinu_addr;
+	uint32 index = new_PD_PT();	//create a new page directory for process
+
+	proctab[pid].page_dir = page_list[index].addr;
+
+	//initialize the new page directory with xinu pages
+	for (i = 0; i < (XINU_PAGES >> 10); i++) {
+		xinu_addr.fm_num = page_list[i].addr.fm_num;
+		new_PDE(index, xinu_addr);
+	}
 }
 
 uint32 new_PD_PT(void) {
@@ -59,7 +75,7 @@ uint32 new_PD_PT(void) {
         }
     }
 
-    return MAX_PT_SIZE;
+    return MAX_PT_SIZE;	//return max size of the page table area upon failure
 }
 
 uint32 new_PDE(uint32 pg_dir, phy_addr_t addr) {
@@ -68,8 +84,8 @@ uint32 new_PDE(uint32 pg_dir, phy_addr_t addr) {
 
     for (i = 0; i < 1024; i++) {
         xinu_pd = get_PDE(pg_dir, i);
-        if (xinu_pd.pt_valid == 0) {
-            xinu_pd.pt_valid = 1;
+        if (xinu_pd.pd_valid == 0) {
+            xinu_pd.pd_valid = 1;
             entry = i;
             break;
         }
@@ -86,7 +102,7 @@ uint32 new_PDE(uint32 pg_dir, phy_addr_t addr) {
 	xinu_pd.pd_mbz	    = 0;	/* must be zero			*/
 	xinu_pd.pd_fmb	    = 0;	/* four MB pages?		*/
 	xinu_pd.pd_global	= 0;	/* global (ignored)		*/
-    xinu_pd.pt_valid    = 1;
+    xinu_pd.pd_valid    = 1;
 	xinu_pd.pd_avail 	= 0;	/* for programmer's use		*/
 	xinu_pd.pd_base	    = addr.fm_num;	/* location of page table?	*/
 
