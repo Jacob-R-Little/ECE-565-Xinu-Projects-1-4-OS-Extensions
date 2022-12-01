@@ -42,7 +42,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	ptnew = &proctab[currpid];
 	ptnew->prstate = PR_CURR;
 	preempt = QUANTUM;		/* Reset time slice for process	*/
-	debug_print("ctxsw :: %d -> %d | pg_dir fm: %d | ", old_pid, currpid, proctab[currpid].page_dir.fm_num);
+	debug_print("ctxsw :: %d -> %d | pg_dir fm: %05x | ", old_pid, currpid, proctab[currpid].page_dir.fm_num);
 	set_PDBR(ptnew->page_dir);   // change to new virtual address space
 	debug_print("ctxsw successful!\n");
 	ctxsw(&ptold->prstkptr, &ptnew->prstkptr);

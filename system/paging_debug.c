@@ -22,7 +22,7 @@ void debug_print_PD(pid32 pid) {
         uint32 i_range = 10; // 1024
         uint32 j_range = 1024; // 1024
 
-        debug_print("\n~~~~~ P%d Page Directory ~~~~~\n\n", pid);
+        debug_print("\n~~~~~ P%d Page Directory (%05x) ~~~~~\n\n", pid, PD_addr.fm_num);
 
         for (i = 0; i < i_range; i++) {
             PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
@@ -30,7 +30,7 @@ void debug_print_PD(pid32 pid) {
                 for (j = 0; j < j_range; j++) {
                     PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
                     if (PTE.pt_valid == TRUE) {
-                        if (!(j % 8)) debug_print("\n%8x | ", PDE.pd_base);
+                        if (!(j % 8)) debug_print("\n%05x | ", PDE.pd_base);
                         debug_print("%05x %05x | ", (i << 10) + j, PTE.pt_base);
                     }
                 }
@@ -39,6 +39,62 @@ void debug_print_PD(pid32 pid) {
         }
 
         debug_print("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n", pid);
+
+        restore(mask);
+    #endif
+}
+
+void debug_verify_PD_system_pages(void) {
+    #ifdef DEBUG
+        intmask mask = disable();
+        uint32 i,j;
+        phy_addr_t PD_addr = proctab[NULLPROC].page_dir;
+        pd_t PDE;
+        pt_t PTE;
+        bool8 verified = TRUE;
+
+        debug_print("\n~~~~~ P%d Page Directory Verify System Pages (%05x) ~~~~~\n\n", NULLPROC, PD_addr.fm_num);
+
+        for (i = 0; i < ((XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE + MAX_SWAP_SIZE) >> 10); i++) {
+            PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+            for (j = 0; j < 1024; j++) {
+                PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+                if (((i << 10) + j) != (PTE.pt_base)) {
+                    verified = FALSE;
+                    debug_print("%05x | %05x %05x\n", PDE.pd_base, (i << 10) + j, PTE.pt_base);
+                }
+            }
+        }
+        if (verified) debug_print("\n~~~~~ P%d System Page Directory VERIFIED!!! (%05x) ~~~~~\n\n", NULLPROC, PD_addr.fm_num);
+        else debug_print("\n~~~~~ P%d System Page Directory INCORRECT (%05x) ~~~~~\n\n", NULLPROC, PD_addr.fm_num);
+
+        restore(mask);
+    #endif
+}
+
+void debug_verify_PD_xinu_pages(pid32 pid) {
+    #ifdef DEBUG
+        intmask mask = disable();
+        uint32 i,j;
+        phy_addr_t PD_addr = proctab[pid].page_dir;
+        pd_t PDE;
+        pt_t PTE;
+        bool8 verified = TRUE;
+
+        debug_print("\n~~~~~ P%d Page Directory Verify Xinu Pages (%05x) ~~~~~\n\n", pid, PD_addr.fm_num);
+
+        for (i = 0; i < (XINU_PAGES >> 10); i++) {
+            PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+            for (j = 0; j < 1024; j++) {
+                PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+                if (((i << 10) + j) != (PTE.pt_base)) {
+                    verified = FALSE;
+                    debug_print("%05x | %05x %05x\n", PDE.pd_base, (i << 10) + j, PTE.pt_base);
+                }
+            }
+        }
+        if (verified) debug_print("\n~~~~~ P%d Page Directory VERIFIED!!! (%05x) ~~~~~\n\n", pid, PD_addr.fm_num);
+        else debug_print("\n~~~~~ P%d Page Directory INCORRECT (%05x) ~~~~~\n\n", pid, PD_addr.fm_num);
 
         restore(mask);
     #endif

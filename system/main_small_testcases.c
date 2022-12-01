@@ -156,8 +156,12 @@ process	main(void)
 	sync_printf("[TEST 1] P%d:: Spawning 2 processes that do not perform any vheap allocations...\n\n", currpid);
 
 	resume(vcreate((void *)empty_process, INITSTK, 1, "p1", 0));
-	debug_print_PD(currpid);
-	debug_print_PD(currpid + 1);
+	// debug_print_PD(currpid);
+	// debug_print_PD(currpid + 1);
+	// *(uint32 *)(0x6007 << 12) = 0;	// intentionally corrupt xinu page to ensure verify tests work
+	debug_verify_PD_system_pages();
+	debug_verify_PD_xinu_pages(currpid);
+	debug_verify_PD_xinu_pages(currpid + 1);
 	sleepms(1000);	
 	resume(vcreate((void *)empty_process, INITSTK, 1, "p2", 0));
 
