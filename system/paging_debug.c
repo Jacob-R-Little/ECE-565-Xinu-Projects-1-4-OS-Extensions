@@ -31,7 +31,7 @@ void debug_print_PD(pid32 pid) {
                     PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
                     if (PTE.pt_valid == TRUE) {
                         if (!(j % 8)) debug_print("\n%8x | ", PDE.pd_base);
-                        debug_print("%03x%03x%03x | ", i, j, PTE.pt_base);
+                        debug_print("%05x %05x | ", (i << 10) + j, PTE.pt_base);
                     }
                 }
                 debug_print("\n");
