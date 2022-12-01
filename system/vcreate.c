@@ -1,4 +1,4 @@
-/* create.c - create, newpid */
+/* vcreate.c - vcreate */
 
 #include <xinu.h>
 
@@ -23,6 +23,8 @@ pid32	vcreate(
 	uint32		*a;		/* Points to list of args	*/
 	uint32		*saddr;		/* Stack address		*/
 
+    set_PDBR(proctab[NULLPROC].page_dir);   // change to system virtual address space
+
 	mask = disable();
 	if (ssize < MINSTK)
 		ssize = MINSTK;
@@ -30,6 +32,7 @@ pid32	vcreate(
 	if ( (priority < 1) || ((pid=newpid()) == SYSERR) ||
 	     ((saddr = (uint32 *)getstk(ssize)) == (uint32 *)SYSERR) ) {
 		restore(mask);
+        set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
 		return SYSERR;
 	}
 
@@ -94,5 +97,7 @@ pid32	vcreate(
 	*--saddr = 0;			/* %edi */
 	*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
 	restore(mask);
+
+    set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
 	return pid;
 }

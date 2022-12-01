@@ -2,6 +2,8 @@
 
 #include <xinu.h>
 
+#ifdef MAIN
+
 process	main(void)
 {
 	pid32	shpid;		/* Shell process ID */
@@ -28,3 +30,5 @@ process	main(void)
 	}
 	return OK;
 }
+
+#endif

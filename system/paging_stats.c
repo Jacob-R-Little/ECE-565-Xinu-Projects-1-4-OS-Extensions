@@ -2,20 +2,6 @@
 
 #include <xinu.h>
 
-/*
-    for (i = 0; i < MAX_FFS_SIZE; i++) {
-		frame_list[i].addr.fm_num = XINU_PAGES + i;
-		frame_list[i].valid = FALSE;
-	}
-	for (i = 0; i < MAX_PT_SIZE; i++) {
-		page_list[i].addr.fm_num = XINU_PAGES + MAX_FFS_SIZE + i;
-		page_list[i].valid = FALSE;
-	}
-	for (i = 0; i < MAX_SWAP_SIZE; i++) {
-		swap_list[i].addr.fm_num = XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE + i;
-		swap_list[i].valid = FALSE; 
-	} */
-
 uint32 free_ffs_pages() {
     uint32 free_pages = 0;
     int i;

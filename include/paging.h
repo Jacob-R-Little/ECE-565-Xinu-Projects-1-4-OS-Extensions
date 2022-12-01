@@ -3,6 +3,12 @@
 #ifndef _PAGING_H_
 #define _PAGING_H_
 
+// #define MAIN
+#define SMALL_TEST
+// #define LARGE_TEST
+
+#define DEBUG
+
 /* Macros */
 #define XINU_PAGES      8192    /* number of pages used by default by Xinu               */
 #define PAGE_SIZE       4096    /* number of bytes per page                              */

@@ -2,8 +2,6 @@
 
 #include <xinu.h>
 
-#define DEBUG
-
 void debug_print(char *fmt, ...) {       
     #ifdef DEBUG
         intmask mask = disable();
