@@ -194,6 +194,7 @@ void enable_paging(){
 void set_PDBR(phy_addr_t addr) {
 
   unsigned long temp =  read_cr3();
+  temp = temp & 0x00000FFF;
   temp = temp | (addr.fm_num << 12);
   write_cr3(temp);
 
