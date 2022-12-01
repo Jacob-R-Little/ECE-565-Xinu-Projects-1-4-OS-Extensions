@@ -112,5 +112,6 @@ uint32 used_ffs_frames(pid32);
 /* functions for paging debug */
 
 void debug_print(char *fmt, ...);
+void debug_print_PD(pid32 pid);
 
 #endif

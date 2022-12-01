@@ -85,7 +85,6 @@ uint32 new_PDE(uint32 pg_dir, phy_addr_t addr) {
     for (i = 0; i < 1024; i++) {
         xinu_pd = get_PDE(pg_dir, i);
         if (xinu_pd.pd_valid == 0) {
-            xinu_pd.pd_valid = 1;
             entry = i;
             break;
         }
