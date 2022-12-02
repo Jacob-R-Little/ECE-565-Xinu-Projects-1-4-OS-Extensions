@@ -115,5 +115,6 @@ void debug_print(char *fmt, ...);
 void debug_print_PD(pid32 pid);
 void debug_verify_PD_system_pages(void);
 void debug_verify_PD_xinu_pages(pid32 pid);
+syscall print_ready_list();
 
 #endif

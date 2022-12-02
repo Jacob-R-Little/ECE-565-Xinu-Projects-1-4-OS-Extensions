@@ -99,3 +99,24 @@ void debug_verify_PD_xinu_pages(pid32 pid) {
         restore(mask);
     #endif
 }
+
+syscall print_ready_list() {
+    #ifdef DEBUG
+        intmask mask = disable();	/* Interrupt mask		*/
+        qid16	next = firstid(readylist);
+        qid16	tail = queuetail(readylist);
+        
+
+        kprintf("\n\n---READYLIST---\n");
+
+        while(next != tail) {
+            kprintf("%d\n", (uint32)next);
+            next = queuetab[next].qnext;
+        }
+
+        kprintf("---------------\n\n");
+
+        restore(mask);
+    #endif
+	return OK;
+}
