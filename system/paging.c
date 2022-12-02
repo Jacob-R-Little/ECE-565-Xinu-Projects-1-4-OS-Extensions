@@ -158,3 +158,16 @@ pt_t get_PTE(uint32 pg_tab, uint32 entry) {
     return *(pt_t *)((page_list[pg_tab].addr.fm_num << 12) + (entry << 2));
 }
 
+uint32 fm_index(phy_addr_t addr) {
+	if (addr.fm_num > XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE)	// swap area address
+		return addr.fm_num - XINU_PAGES - MAX_FFS_SIZE - MAX_PT_SIZE;
+	if (addr.fm_num > XINU_PAGES + MAX_FFS_SIZE)	// page table area address
+		return addr.fm_num - XINU_PAGES - MAX_FFS_SIZE;
+	if (addr.fm_num > XINU_PAGES)	// FFS area address
+		return addr.fm_num - XINU_PAGES;
+	return addr.fm_num;	// XINU area page number
+}
+
+uint32 PID_list_index(pid32 pid) {
+	return fm_index(proctab[pid].page_dir);
+}

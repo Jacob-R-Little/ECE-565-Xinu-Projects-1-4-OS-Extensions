@@ -51,12 +51,15 @@ pid32	vcreate(
 	prptr->prparent = (pid32)getpid();
 	prptr->prhasmsg = FALSE;
 
-	init_PD(pid);
-
 	/* Set up stdin, stdout, and stderr descriptors for the shell	*/
 	prptr->prdesc[0] = CONSOLE;
 	prptr->prdesc[1] = CONSOLE;
 	prptr->prdesc[2] = CONSOLE;
+
+	/* Initialize user page directory */
+
+	init_PD(pid);
+	prptr->user_proc = TRUE;
 
 	/* Initialize stack as if the process was called		*/
 

@@ -53,14 +53,15 @@ pid32	create(
 	prptr->prdesc[1] = CONSOLE;
 	prptr->prdesc[2] = CONSOLE;
 
+	/* Set page directory to system page directory */
+
+	prptr->page_dir = proctab[NULLPROC].page_dir;	// page directory of null process
+	prptr->user_proc = FALSE;
+
 	/* Initialize stack as if the process was called		*/
 
 	*saddr = STACKMAGIC;
 	savsp = (uint32)saddr;
-
-	/* Set page directory to system page directory */
-
-	prptr->page_dir = proctab[NULLPROC].page_dir;	// page directory of null process
 
 	/* Push arguments */
 	a = (uint32 *)(&nargs + 1);	/* Start of args		*/

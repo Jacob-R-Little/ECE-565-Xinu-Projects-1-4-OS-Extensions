@@ -24,6 +24,9 @@ syscall	kill(
 		return SYSERR;
 	}
 
+	// invalidate page directory
+	page_list[PID_list_index(pid)].valid = FALSE;
+
 	if (--prcount <= 1) {		/* Last user process completes	*/
 		xdone();
 	}

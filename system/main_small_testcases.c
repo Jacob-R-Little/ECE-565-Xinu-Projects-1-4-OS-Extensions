@@ -7,7 +7,7 @@
 // #define TEST3
 // #define TEST4
 
-#ifdef SMALL_TEST
+// #ifdef SMALL_TEST
 
 void sync_printf(char *fmt, ...)
 {
@@ -168,6 +168,11 @@ process	main(void)
 	receive();
 	receive();
 
+	if (page_list[PID_list_index(currpid + 1)].valid) debug_print("P%d Needs to be invalidated\n", currpid + 1);
+	else debug_print("P%d Invalidated!\n", currpid + 1);
+	if (page_list[PID_list_index(currpid + 2)].valid) debug_print("P%d Needs to be invalidated\n", currpid + 2);
+	else debug_print("P%d Invalidated!\n", currpid + 2);
+
 	sync_printf("P%d:: Free FFS pages = %d out of %d\n\n", currpid, free_ffs_pages(), MAX_FFS_SIZE);
 
 #endif
@@ -224,4 +229,4 @@ process	main(void)
    	return OK; 
 }
 
-#endif
+// #endif
