@@ -171,3 +171,44 @@ uint32 fm_index(phy_addr_t addr) {
 uint32 PID_list_index(pid32 pid) {
 	return fm_index(proctab[pid].page_dir);
 }
+
+void kill_user(pid32 pid) {
+	uint32 i,j;
+	phy_addr_t PD_addr = proctab[pid].page_dir;
+	phy_addr_t PT_addr;
+	pd_t PDE;
+	pt_t PTE;
+
+	for (i = 0; i < (XINU_PAGES >> 10); i++) {
+		PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+		PDE.pd_pres = 0;
+		PDE.pd_valid = 0;
+		PDE.pd_base = 0;
+		set_PDE(fm_index(PD_addr), i, PDE);
+	}
+
+	for (i = (XINU_PAGES >> 10); i < 1024; i++) {
+		PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+		if (PDE.pd_valid == TRUE) {
+			for (j = 0; j < 1024; j++) {
+				PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+				if (PTE.pt_valid == TRUE) {
+					PT_addr.fm_num = PTE.pt_base;
+					PTE.pt_pres = 0;
+					PTE.pt_valid = 0;
+					PTE.pt_base = 0;
+					set_PTE(fm_index(PT_addr), j, PTE);
+					frame_list[fm_index(PT_addr)].valid = FALSE;	// deallocate frame
+				}
+			}
+				PDE.pd_pres = 0;
+				PDE.pd_valid = 0;
+				PDE.pd_base = 0;
+				set_PDE(fm_index(PD_addr), i, PDE);
+				page_list[fm_index(PD_addr)].valid = FALSE;	// deallocate pate table
+		}
+	}
+
+	page_list[PID_list_index(pid)].valid = FALSE;	// deallocate pate directory
+
+}

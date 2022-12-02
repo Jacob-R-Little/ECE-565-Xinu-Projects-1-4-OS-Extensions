@@ -102,6 +102,7 @@ pd_t get_PDE(uint32 pg_dir, uint32 entry);
 pt_t get_PTE(uint32 pg_tab, uint32 entry);
 uint32 fm_index(phy_addr_t addr);
 uint32 PID_list_index(pid32 pid);
+void kill_user(pid32 pid);
 
 pid32	vcreate(void *, uint32, pri16, char *, uint32, ...);
 

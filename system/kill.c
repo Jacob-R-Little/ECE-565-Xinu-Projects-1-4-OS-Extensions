@@ -20,12 +20,14 @@ syscall	kill(
 	if (isbadpid(pid) || (pid == NULLPROC)
 	    || ((prptr = &proctab[pid])->prstate) == PR_FREE) {
 		restore(mask);
-		set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
+		set_PDBR(proctab[NULLPROC].page_dir);    // change to system virtual address space
 		return SYSERR;
 	}
 
-	// invalidate page directory
-	page_list[PID_list_index(pid)].valid = FALSE;
+	// invalidate page directory of user process
+	if (prptr->user_proc) kill_user(pid);
+
+	prptr->page_dir = proctab[NULLPROC].page_dir;
 
 	if (--prcount <= 1) {		/* Last user process completes	*/
 		xdone();

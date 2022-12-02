@@ -164,7 +164,6 @@ process	main(void)
 	debug_verify_PD_xinu_pages(currpid + 1);
 	sleepms(1000);	
 	resume(vcreate((void *)empty_process, INITSTK, 1, "p2", 0));
-
 	receive();
 	receive();
 
