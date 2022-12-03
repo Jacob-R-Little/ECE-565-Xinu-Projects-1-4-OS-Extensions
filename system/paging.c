@@ -78,6 +78,57 @@ uint32 new_PD_PT(void) {
     return MAX_PT_SIZE;	//return max size of the page table area upon failure
 }
 
+uint32 new_frame(void) {
+    uint32 i;
+
+    for (i = 0; i < MAX_FFS_SIZE; i++) {
+        if (frame_list[i].valid == FALSE) {
+            frame_list[i].valid = TRUE;
+            return i;
+        }
+    }
+
+    return MAX_FFS_SIZE;	//return max size of the page table area upon failure
+}
+
+pd_t make_PDE(bool8 pres, bool8 valid, uint32 base) {
+	pd_t PDE;
+
+	PDE.pd_pres 	= pres;		/* page table present?		*/
+	PDE.pd_write 	= 1;		/* page is writable?		*/
+	PDE.pd_user 	= 0;		/* is use level protection?	*/
+	PDE.pd_pwt 	    = 1;		/* write through cachine for pt?*/
+	PDE.pd_pcd	    = 1;		/* cache disable for this pt?	*/
+	PDE.pd_acc	    = 1;		/* page table was accessed?	*/
+	PDE.pd_mbz	    = 0;		/* must be zero			*/
+	PDE.pd_fmb	    = 0;		/* four MB pages?		*/
+	PDE.pd_global	= 0;		/* global (ignored)		*/
+    PDE.pd_valid    = valid;
+	PDE.pd_avail 	= 0;		/* for programmer's use		*/
+	PDE.pd_base	    = base;		/* location of page table?	*/
+
+	return PDE;
+}
+
+pt_t make_PTE(bool8 pres, bool8 valid, uint32 base) {
+	pt_t PTE;
+
+	PTE.pt_pres		= pres;		    /* page is present?		*/
+	PTE.pt_write 	= 1;		    /* page is writable?		*/
+	PTE.pt_user		= 0;		    /* is use level protection?	*/
+	PTE.pt_pwt		= 1;		    /* write through for this page? */
+	PTE.pt_pcd		= 1;		    /* cache disable for this page? */
+	PTE.pt_acc		= 1;		    /* page was accessed?		*/
+	PTE.pt_dirty 	= 0;		    /* page was written?		*/
+	PTE.pt_mbz		= 0;		    /* must be zero			*/
+	PTE.pt_global	= 0;		    /* should be zero in 586	*/
+    PTE.pt_valid    = valid;
+	PTE.pt_avail 	= 0;			/* for programmer's use		*/
+	PTE.pt_base		= base;			/* location of page?		*/
+
+	return PTE;
+}
+
 uint32 new_PDE(uint32 pg_dir, phy_addr_t addr) {
     pd_t xinu_pd;
     uint32 entry = 1024, i;
@@ -92,20 +143,7 @@ uint32 new_PDE(uint32 pg_dir, phy_addr_t addr) {
     
     if (entry == 1024) return entry;    // Page Table Full
 
-	xinu_pd.pd_pres 	= 1;	/* page table present?		*/
-	xinu_pd.pd_write 	= 1;	/* page is writable?		*/
-	xinu_pd.pd_user 	= 0;	/* is use level protection?	*/
-	xinu_pd.pd_pwt 	    = 1;	/* write through cachine for pt?*/
-	xinu_pd.pd_pcd	    = 1;	/* cache disable for this pt?	*/
-	xinu_pd.pd_acc	    = 1;	/* page table was accessed?	*/
-	xinu_pd.pd_mbz	    = 0;	/* must be zero			*/
-	xinu_pd.pd_fmb	    = 0;	/* four MB pages?		*/
-	xinu_pd.pd_global	= 0;	/* global (ignored)		*/
-    xinu_pd.pd_valid    = 1;
-	xinu_pd.pd_avail 	= 0;	/* for programmer's use		*/
-	xinu_pd.pd_base	    = addr.fm_num;	/* location of page table?	*/
-
-    set_PDE(pg_dir, entry, xinu_pd);
+    set_PDE(pg_dir, entry, make_PDE(1, 1, addr.fm_num));
 
     return entry;
 }
@@ -124,20 +162,7 @@ uint32 new_PTE(uint32 pg_tab, phy_addr_t addr) {
     
     if (entry == 1024) return entry;    // Page Directory Full
 
-	xinu_pt.pt_pres		= 1;		    /* page is present?		*/
-	xinu_pt.pt_write 	= 1;		    /* page is writable?		*/
-	xinu_pt.pt_user		= 0;		    /* is use level protection?	*/
-	xinu_pt.pt_pwt		= 1;		    /* write through for this page? */
-	xinu_pt.pt_pcd		= 1;		    /* cache disable for this page? */
-	xinu_pt.pt_acc		= 1;		    /* page was accessed?		*/
-	xinu_pt.pt_dirty 	= 0;		    /* page was written?		*/
-	xinu_pt.pt_mbz		= 0;		    /* must be zero			*/
-	xinu_pt.pt_global	= 0;		    /* should be zero in 586	*/
-    xinu_pt.pt_valid    = 1;
-	xinu_pt.pt_avail 	= 0;		    /* for programmer's use		*/
-	xinu_pt.pt_base		= addr.fm_num;	/* location of page?		*/
-
-    set_PTE(pg_tab, entry, xinu_pt);
+    set_PTE(pg_tab, entry, make_PTE(1, 1, addr.fm_num));
 
     return entry;
 }

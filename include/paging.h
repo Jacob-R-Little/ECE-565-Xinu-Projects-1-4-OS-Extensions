@@ -94,6 +94,9 @@ void set_PDBR(phy_addr_t addr);
 void init_paging(void);
 void init_PD(pid32 pid);
 uint32 new_PD_PT(void);
+uint32 new_frame(void);
+pd_t make_PDE(bool8 pres, bool8 valid, uint32 base);
+pt_t make_PTE(bool8 pres, bool8 valid, uint32 base);
 uint32 new_PDE(uint32 pg_dir, phy_addr_t addr);
 uint32 new_PTE(uint32 pg_tab, phy_addr_t addr);
 void set_PDE(uint32 pg_dir, uint32 entry, pd_t pde);
@@ -107,8 +110,9 @@ void kill_user(pid32 pid);
 pid32	vcreate(void *, uint32, pri16, char *, uint32, ...);
 
 char* vmalloc(uint32);
-
+char* vfound(virt_addr_t addr, uint32 nbytes);
 syscall vfree(char*, uint32);
+
 uint32 free_ffs_pages();
 uint32 free_swap_pages();
 uint32 allocated_virtual_pages(pid32);

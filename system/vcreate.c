@@ -23,16 +23,16 @@ pid32	vcreate(
 	uint32		*a;		/* Points to list of args	*/
 	uint32		*saddr;		/* Stack address		*/
 
-    set_PDBR(proctab[NULLPROC].page_dir);   // change to system virtual address space
-
 	mask = disable();
+	set_PDBR(proctab[NULLPROC].page_dir);   // change to system virtual address space
+
 	if (ssize < MINSTK)
 		ssize = MINSTK;
 	ssize = (uint32) roundmb(ssize);
 	if ( (priority < 1) || ((pid=newpid()) == SYSERR) ||
 	     ((saddr = (uint32 *)getstk(ssize)) == (uint32 *)SYSERR) ) {
-		restore(mask);
         set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
+		restore(mask);
 		return SYSERR;
 	}
 
@@ -99,8 +99,8 @@ pid32	vcreate(
 	*--saddr = 0;			/* %esi */
 	*--saddr = 0;			/* %edi */
 	*pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
+	
+	set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
 	restore(mask);
-
-    set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
 	return pid;
 }

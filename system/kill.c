@@ -14,13 +14,13 @@ syscall	kill(
 	struct	procent *prptr;		/* Ptr to process's table entry	*/
 	int32	i;			/* Index into descriptors	*/
 
+	mask = disable();
 	set_PDBR(proctab[NULLPROC].page_dir);   // change to system virtual address space
 
-	mask = disable();
 	if (isbadpid(pid) || (pid == NULLPROC)
 	    || ((prptr = &proctab[pid])->prstate) == PR_FREE) {
-		restore(mask);
 		set_PDBR(proctab[NULLPROC].page_dir);    // change to system virtual address space
+		restore(mask);
 		return SYSERR;
 	}
 
@@ -62,7 +62,7 @@ syscall	kill(
 		prptr->prstate = PR_FREE;
 	}
 
-	restore(mask);
 	set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
+	restore(mask);
 	return OK;
 }
