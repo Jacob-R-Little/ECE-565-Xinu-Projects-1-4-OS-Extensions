@@ -18,25 +18,39 @@ char* vmalloc(uint32 nbytes) {
     for (i = (XINU_PAGES >> 10); i < 1024; i++) {
         PDE = get_PDE_virt(PD_addr.fm_num, i);
         if (PDE.pd_valid == FALSE) {
-            counter += 1024;
-        }
-        for (j = 0; j < 1024; j++) {
-            PTE = get_PTE_virt(PDE.pd_base, j);
-            if (PTE.pt_valid == FALSE) {
-                if (counter == 0) {
-                    start.pd_offset = i;
-                    start.pt_offset = j;
-                }
-                counter++;
-                if ((counter << 12) >= nbytes) {
-                    ptr = vfound(start, nbytes);
-                    set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
-                    restore(mask);
-                    return ptr;
-                }
+            debug_print("~~~vmalloc: PDE INVALID~~~\n");
+            if (counter == 0) {
+                start.pd_offset = i;
+                start.pt_offset = 0;
             }
-            else {
-                counter = 0;
+            counter += 1024;
+            if ((counter << 12) >= nbytes) {
+                ptr = vfound(start, nbytes);
+                set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
+                restore(mask);
+                return ptr;
+            }
+        }
+        else {
+            debug_print("~~~vmalloc: PDE VALID~~~\n");
+            for (j = 0; j < 1024; j++) {
+                PTE = get_PTE_virt(PDE.pd_base, j);
+                if (PTE.pt_valid == FALSE) {
+                    if (counter == 0) {
+                        start.pd_offset = i;
+                        start.pt_offset = j;
+                    }
+                    counter++;
+                    if ((counter << 12) >= nbytes) {
+                        ptr = vfound(start, nbytes);
+                        set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
+                        restore(mask);
+                        return ptr;
+                    }
+                }
+                else {
+                    counter = 0;
+                }
             }
         }
     }
@@ -54,15 +68,18 @@ char* vfound(virt_addr_t addr, uint32 nbytes) {
 
     uint32 numPages = (nbytes >> 12) + (uint32)((nbytes % (1 << 12)) != 0);
 
-    debug_print("vfound\n");
+    debug_print("~~~vfound~~~\n");
 
     for (i = addr.pd_offset; i < 1024; i++) {
         PDE = get_PDE_virt(PD_addr.fm_num, i);
         if (PDE.pd_valid == FALSE) {
+            debug_print("~~~NEW PDE~~~\n");
             index = new_PD_PT();
-            set_PDE(index, i, make_PDE(1, 1, page_list[index].addr.fm_num));
+            set_PDE(fm_index(PD_addr), i, make_PDE(1, 1, page_list[index].addr.fm_num));
+            PDE = get_PDE_virt(PD_addr.fm_num, i);
         }
         for (j = j_start; j < 1024; j++) {
+            debug_print("~~~NEW PTE~~~\n");
             numPages--;
             PT_addr.fm_num = PDE.pd_base;
             set_PTE(fm_index(PT_addr), j, make_PTE(0, 1, 0));
