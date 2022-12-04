@@ -22,7 +22,7 @@ char* vmalloc(uint32 nbytes) {
         }
         else {
             for (j = 0; j < 1024; j++) {
-                PTE = *(pt_t *)((i << 12) + (j << 2));
+                PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
                 if (PTE.pt_valid == FALSE) {
                     if (counter == 0) {
                         start.pd_offset = i;
@@ -60,7 +60,7 @@ char* vfound(virt_addr_t addr, uint32 nbytes) {
         PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
         if (PDE.pd_valid == FALSE) {
             index = new_PD_PT();
-            set_PDE(index, i, make_PDE(0, 1, 0));
+            set_PDE(index, i, make_PDE(1, 1, page_list[index].addr.fm_num));
         }
         for (j = j_start; j < 1024; j++) {
             numPages--;
@@ -100,7 +100,7 @@ syscall vfree(char* ptr, uint32 nbytes) {
         }
         else {
             for (j = j_start; j < 1024; j++) {
-                PTE = *(pt_t *)((PD_addr.fm_num << 12) + (j << 2));
+                PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
                 if (PTE.pt_valid == FALSE) {
                     set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
                     restore(mask);
@@ -140,7 +140,7 @@ syscall vdealloc(virt_addr_t addr, uint32 nbytes) {
     for (i = addr.pd_offset; i < 1024; i++) {
         PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
         for (j = j_start; j < 1024; j++) {
-            PTE = *(pt_t *)((i << 12) + (j << 2));
+            PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
             frame.fm_num = PTE.pt_base;
             frame_list[fm_index(frame)].valid = FALSE;
             numPages--;
