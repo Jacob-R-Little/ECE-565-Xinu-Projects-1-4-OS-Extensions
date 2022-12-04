@@ -112,6 +112,7 @@ pid32	vcreate(void *, uint32, pri16, char *, uint32, ...);
 char* vmalloc(uint32);
 char* vfound(virt_addr_t addr, uint32 nbytes);
 syscall vfree(char*, uint32);
+syscall vdealloc(virt_addr_t addr, uint32 nbytes);
 
 uint32 free_ffs_pages();
 uint32 free_swap_pages();
