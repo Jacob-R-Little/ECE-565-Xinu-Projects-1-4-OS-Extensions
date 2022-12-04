@@ -183,6 +183,14 @@ pt_t get_PTE(uint32 pg_tab, uint32 entry) {
     return *(pt_t *)((page_list[pg_tab].addr.fm_num << 12) + (entry << 2));
 }
 
+pd_t get_PDE_virt(uint32 frame, uint32 entry) {
+	return *(pd_t *)((frame << 12) + (entry << 2));
+}
+
+pt_t get_PTE_virt(uint32 frame, uint32 entry) {
+	return *(pt_t *)((frame << 12) + (entry << 2));
+}
+
 uint32 fm_index(phy_addr_t addr) {
 	if (addr.fm_num > XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE)	// swap area address
 		return addr.fm_num - XINU_PAGES - MAX_FFS_SIZE - MAX_PT_SIZE;
@@ -204,36 +212,25 @@ void kill_user(pid32 pid) {
 	pd_t PDE;
 	pt_t PTE;
 
-	for (i = 0; i < (XINU_PAGES >> 10); i++) {
-		PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
-		PDE.pd_pres = 0;
-		PDE.pd_valid = 0;
-		PDE.pd_base = 0;
-		set_PDE(fm_index(PD_addr), i, PDE);
-	}
+	for (i = 0; i < (XINU_PAGES >> 10); i++)
+		set_PDE(fm_index(PD_addr), i, make_PDE(0, 0, 0));
 
 	for (i = (XINU_PAGES >> 10); i < 1024; i++) {
-		PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+		PDE = get_PDE_virt(PD_addr.fm_num, i);
 		if (PDE.pd_valid == TRUE) {
 			for (j = 0; j < 1024; j++) {
-				PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+				PTE = get_PTE_virt(PDE.pd_base, j);
 				if (PTE.pt_valid == TRUE) {
 					PT_addr.fm_num = PTE.pt_base;
-					PTE.pt_pres = 0;
-					PTE.pt_valid = 0;
-					PTE.pt_base = 0;
-					set_PTE(fm_index(PT_addr), j, PTE);
+					set_PTE(fm_index(PT_addr), j, make_PTE(0, 0, 0));
 					frame_list[fm_index(PT_addr)].valid = FALSE;	// deallocate frame
 				}
 			}
-				PDE.pd_pres = 0;
-				PDE.pd_valid = 0;
-				PDE.pd_base = 0;
-				set_PDE(fm_index(PD_addr), i, PDE);
-				page_list[fm_index(PD_addr)].valid = FALSE;	// deallocate pate table
+			set_PDE(fm_index(PD_addr), i, make_PDE(0, 0, 0));
+			page_list[fm_index(PD_addr)].valid = FALSE;	// deallocate page table
 		}
 	}
 
-	page_list[PID_list_index(pid)].valid = FALSE;	// deallocate pate directory
+	page_list[PID_list_index(pid)].valid = FALSE;	// deallocate page directory
 
 }

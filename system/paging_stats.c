@@ -42,10 +42,10 @@ uint32 allocated_virtual_pages(pid32 pid) {
     set_PDBR(proctab[NULLPROC].page_dir);   // change to system virtual address space
 
     for (i = 0; i < 1024; i++) {
-        PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+        PDE = get_PDE_virt(PD_addr.fm_num, i);
         if (PDE.pd_valid == TRUE) {
             for (j = 0; j < 1024; j++) {
-                PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+                PTE = get_PTE_virt(PDE.pd_base, j);
                 if (PTE.pt_valid == TRUE) {
                     count++;
                 }
@@ -67,10 +67,10 @@ uint32 used_ffs_frames(pid32 pid) {
     set_PDBR(proctab[NULLPROC].page_dir);   // change to system virtual address space
 
     for (i = (XINU_PAGES >> 10); i < 1024; i++) {
-        PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+        PDE = get_PDE_virt(PD_addr.fm_num, i);
         if ((PDE.pd_valid == TRUE) && (PDE.pd_pres == TRUE)) {
             for (j = 0; j < 1024; j++) {
-                PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+                PTE = get_PTE_virt(PDE.pd_base, j);
                 if ((PTE.pt_valid == TRUE) && (PTE.pt_pres == TRUE)) {
                     count++;
                 }

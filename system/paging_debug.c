@@ -25,10 +25,10 @@ void debug_print_PD(pid32 pid) {
         debug_print("\n~~~~~ P%d Page Directory (%05x) ~~~~~\n\n", pid, PD_addr.fm_num);
 
         for (i = 0; i < i_range; i++) {
-            PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+            PDE = get_PDE_virt(PD_addr.fm_num, i);
             if (PDE.pd_valid == TRUE) {
                 for (j = 0; j < j_range; j++) {
-                    PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+                    PTE = get_PTE_virt(PDE.pd_base, j);
                     if (PTE.pt_valid == TRUE) {
                         if (!(j % 8)) debug_print("\n%05x | ", PDE.pd_base);
                         debug_print("%05x %05x | ", (i << 10) + j, PTE.pt_base);
@@ -56,9 +56,9 @@ void debug_verify_PD_system_pages(void) {
         debug_print("\n~~~~~ P%d Page Directory Verify System Pages (%05x) ~~~~~\n\n", NULLPROC, PD_addr.fm_num);
 
         for (i = 0; i < ((XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE + MAX_SWAP_SIZE) >> 10); i++) {
-            PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+            PDE = get_PDE_virt(PD_addr.fm_num, i);
             for (j = 0; j < 1024; j++) {
-                PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+                PTE = get_PTE_virt(PDE.pd_base, j);
                 if (((i << 10) + j) != (PTE.pt_base)) {
                     verified = FALSE;
                     debug_print("%05x | %05x %05x\n", PDE.pd_base, (i << 10) + j, PTE.pt_base);
@@ -84,9 +84,9 @@ void debug_verify_PD_xinu_pages(pid32 pid) {
         debug_print("\n~~~~~ P%d Page Directory Verify Xinu Pages (%05x) ~~~~~\n\n", pid, PD_addr.fm_num);
 
         for (i = 0; i < (XINU_PAGES >> 10); i++) {
-            PDE = *(pd_t *)((PD_addr.fm_num << 12) + (i << 2));
+            PDE = get_PDE_virt(PD_addr.fm_num, i);
             for (j = 0; j < 1024; j++) {
-                PTE = *(pt_t *)((PDE.pd_base << 12) + (j << 2));
+                PTE = get_PTE_virt(PDE.pd_base, j);
                 if (((i << 10) + j) != (PTE.pt_base)) {
                     verified = FALSE;
                     debug_print("%05x | %05x %05x\n", PDE.pd_base, (i << 10) + j, PTE.pt_base);

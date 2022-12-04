@@ -13,8 +13,8 @@ void pagefault_handler(void) {
 
     phy_addr_t PD_addr = proctab[currpid].page_dir;
 
-    pd_t PDE = *(pd_t *)((PD_addr.fm_num << 12) + (pgfault_addr.pd_offset << 2));
-    pt_t PTE = *(pt_t *)((PD_addr.fm_num << 12) + (pgfault_addr.pt_offset << 2));
+    pd_t PDE = get_PDE_virt(PD_addr.fm_num, pgfault_addr.pd_offset);
+    pt_t PTE = get_PTE_virt(PDE.pd_base, pgfault_addr.pt_offset);
 
     if ((PDE.pd_valid == FALSE) || (PTE.pt_valid == FALSE)) {   // Segmentation Fault
         kprintf("P%d:: SEGMENTATION_FAULT\n", currpid);

@@ -103,6 +103,8 @@ void set_PDE(uint32 pg_dir, uint32 entry, pd_t pde);
 void set_PTE(uint32 pg_tab, uint32 entry, pt_t pte);
 pd_t get_PDE(uint32 pg_dir, uint32 entry);
 pt_t get_PTE(uint32 pg_tab, uint32 entry);
+pd_t get_PDE_virt(uint32 frame, uint32 entry);
+pt_t get_PTE_virt(uint32 frame, uint32 entry);
 uint32 fm_index(phy_addr_t addr);
 uint32 PID_list_index(pid32 pid);
 void kill_user(pid32 pid);
