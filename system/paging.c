@@ -45,6 +45,8 @@ void init_paging(void) {
 		new_PDE(index, xinu_addr);
 	}
 
+	set_evec(14, (uint32)pagefault_handler_disp);
+
 	set_PDBR(proctab[currpid].page_dir);
 	debug_print("About to start paging\n");
 	enable_paging();

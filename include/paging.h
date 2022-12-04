@@ -7,7 +7,7 @@
 #define SMALL_TEST
 // #define LARGE_TEST
 
-#define DEBUG
+// #define DEBUG
 
 /* Macros */
 #define XINU_PAGES      8192    /* number of pages used by default by Xinu               */
@@ -86,6 +86,7 @@ void write_cr0(unsigned long n);
 void write_cr3(unsigned long n);
 void write_cr4(unsigned long n);
 void enable_paging();
+void pagefault_handler_disp();
 void pagefault_handler();
 void set_PDBR(phy_addr_t addr);
 
@@ -126,6 +127,7 @@ uint32 used_ffs_frames(pid32);
 
 void debug_print(char *fmt, ...);
 void debug_print_PD(pid32 pid);
+void debug_print_PD_Heap(pid32 pid);
 void debug_verify_PD_system_pages(void);
 void debug_verify_PD_xinu_pages(pid32 pid);
 syscall print_ready_list();

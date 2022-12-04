@@ -3,8 +3,8 @@
 /* NOTE: set QUANTUM to 10ms */
 
 // #define TEST1
-#define TEST2
-// #define TEST3
+// #define TEST2
+#define TEST3
 // #define TEST4
 
 // #ifdef SMALL_TEST
@@ -31,11 +31,19 @@ process vmalloc_process(){
 
 	/* testing vmalloc only */
 
+	debug_verify_PD_xinu_pages(currpid);
+
+	debug_print_PD_Heap(currpid);
+
 	sync_printf("P%d:: Allocating 8/4/2/8 pages...\n", currpid);
 	char *ptr1 = vmalloc(8 * PAGE_SIZE);
+	debug_print_PD_Heap(currpid);
 	char *ptr2 = vmalloc(4 * PAGE_SIZE);
+	debug_print_PD_Heap(currpid);
 	char *ptr3 = vmalloc(2 * PAGE_SIZE);
+	debug_print_PD_Heap(currpid);
 	char *ptr4 = vmalloc(8 * PAGE_SIZE);
+	debug_print_PD_Heap(currpid);
 
 	sync_printf("P%d:: ptr1=0x%x, ptr2=0x%x, ptr3=0x%x, ptr4=0x%x\n", currpid, ptr1, ptr2, ptr3, ptr4);
 	process_info(currpid);
@@ -57,13 +65,19 @@ process vmalloc_process(){
 
         process_info(currpid);
 
+	debug_print_PD_Heap(currpid);
+
 	/* testing virtual space handling (first-fit) */
 	
 	sync_printf("\nP%d:: Allocating 5 pages...\n", currpid);
 	char *ptr5 = vmalloc(5 * PAGE_SIZE);
+
+	debug_print_PD_Heap(currpid);
 	
 	sync_printf("P%d:: Allocating 8 pages...\n", currpid);
 	char *ptr6 = vmalloc(8 * PAGE_SIZE);
+
+	debug_print_PD_Heap(currpid);
 
 	sync_printf("P%d:: ptr1=0x%x, ptr4=0x%x, ptr5=0x%x, ptr6=0x%x\n", currpid, ptr1, ptr4, ptr5, ptr6);
 	process_info(currpid);
