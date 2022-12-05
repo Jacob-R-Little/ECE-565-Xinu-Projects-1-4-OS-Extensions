@@ -2,10 +2,10 @@
 
 /* NOTE: set QUANTUM to 10ms */
 
-// #define TEST1
-// #define TEST2
+#define TEST1
+#define TEST2
 #define TEST3
-// #define TEST4
+#define TEST4
 
 // #ifdef SMALL_TEST
 
@@ -109,6 +109,10 @@ process vmalloc_process2(uint32 numPages, bool8 debug){
 
 	uint32 i = 0;
 
+	debug_verify_PD_xinu_pages(currpid);
+
+	debug_print_PD_Heap(currpid);
+
 	/* testing vmalloc only */
 
 	if (debug){	
@@ -118,8 +122,11 @@ process vmalloc_process2(uint32 numPages, bool8 debug){
 	}
 
 	char *ptr1 = vmalloc(numPages * PAGE_SIZE);
+	debug_print_PD_Heap(currpid);
 	char *ptr2 = vmalloc(numPages * PAGE_SIZE);
+	debug_print_PD_Heap(currpid);
 	char *ptr3 = vmalloc(numPages * PAGE_SIZE);
+	debug_print_PD_Heap(currpid);
 
 	if (ptr1==(char *)SYSERR || ptr2==(char *)SYSERR || ptr3==(char *)SYSERR){
 		sync_printf("P%d:: allocation failed!\n");	
@@ -135,7 +142,9 @@ process vmalloc_process2(uint32 numPages, bool8 debug){
 		ptr1[i*PAGE_SIZE]=i%128;
 		ptr1[i*PAGE_SIZE+1]=i%128;
 	}	
-		
+
+	debug_print_PD_Heap(currpid);	
+
 	if (debug) process_info(currpid);
 
 	if (debug) kprintf("\nP%d:: checking the values written in the %d pages...\n", currpid, numPages/2);
@@ -144,6 +153,8 @@ process vmalloc_process2(uint32 numPages, bool8 debug){
 			sync_printf("P%d:: ERROR - read incorrect data from page %d!\n",currpid, i);
 		}
 	}
+
+	debug_print_PD_Heap(currpid);
 
 	process_info(currpid);
 

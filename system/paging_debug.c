@@ -58,7 +58,7 @@ void debug_print_PD_Heap(pid32 pid) {
         pt_t PTE;
 
         uint32 i_range = 1024; // 1024
-        uint32 j_range = 1024; // 1024
+        uint32 j_range = 32; // 1024
 
         debug_print("\n~~~~~ P%d Page Directory (%05x) ~~~~~\n\n", pid, PD_addr.fm_num);
 

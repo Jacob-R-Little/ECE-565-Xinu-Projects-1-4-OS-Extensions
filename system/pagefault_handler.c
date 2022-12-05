@@ -21,21 +21,23 @@ void pagefault_handler(void) {
 
     if ((PDE.pd_valid == FALSE) || (PTE.pt_valid == FALSE)) {   // Segmentation Fault
         kprintf("P%d:: SEGMENTATION_FAULT\n", currpid);
+        if (PDE.pd_valid == FALSE) debug_print("P%d:: PDE INVALID\n", currpid);
+        if (PTE.pt_valid == FALSE) debug_print("P%d:: PTE INVALID\n", currpid);
         kill(currpid);
         set_PDBR(proctab[NULLPROC].page_dir);    // change to system virtual address space
         return;
     }
 
-    debug_print("P%d:: PG_FAULT_LAZY_ALLOC\n", currpid);
+    // debug_print("P%d:: PG_FAULT_LAZY_ALLOC\n", currpid);
 
     // Lazy Allocation
     uint32 index = new_frame();
     PT_addr.fm_num = PDE.pd_base;
     set_PTE(fm_index(PT_addr), pgfault_addr.pt_offset, make_PTE(1, 1, frame_list[index].addr.fm_num));
 
-    debug_print("P%d:: PG_FAULT_LAZY_ALLOC_DONE\n", currpid);
+    // debug_print("P%d:: PG_FAULT_LAZY_ALLOC_DONE\n", currpid);
 
-    debug_print_PD_Heap(currpid);
+    // debug_print_PD_Heap(currpid);
 
     set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
     return;

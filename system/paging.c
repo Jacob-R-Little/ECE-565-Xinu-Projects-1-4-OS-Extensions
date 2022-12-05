@@ -211,6 +211,7 @@ void kill_user(pid32 pid) {
 	uint32 i,j;
 	phy_addr_t PD_addr = proctab[pid].page_dir;
 	phy_addr_t PT_addr;
+	phy_addr_t FR_addr;
 	pd_t PDE;
 	pt_t PTE;
 
@@ -219,17 +220,18 @@ void kill_user(pid32 pid) {
 
 	for (i = (XINU_PAGES >> 10); i < 1024; i++) {
 		PDE = get_PDE_virt(PD_addr.fm_num, i);
+		PT_addr.fm_num = PDE.pd_base;
 		if (PDE.pd_valid == TRUE) {
 			for (j = 0; j < 1024; j++) {
 				PTE = get_PTE_virt(PDE.pd_base, j);
+				FR_addr.fm_num = PTE.pt_base;
 				if (PTE.pt_valid == TRUE) {
-					PT_addr.fm_num = PTE.pt_base;
 					set_PTE(fm_index(PT_addr), j, make_PTE(0, 0, 0));
-					frame_list[fm_index(PT_addr)].valid = FALSE;	// deallocate frame
+					frame_list[fm_index(FR_addr)].valid = FALSE;	// deallocate frame
 				}
 			}
 			set_PDE(fm_index(PD_addr), i, make_PDE(0, 0, 0));
-			page_list[fm_index(PD_addr)].valid = FALSE;	// deallocate page table
+			page_list[fm_index(PT_addr)].valid = FALSE;	// deallocate page table
 		}
 	}
 

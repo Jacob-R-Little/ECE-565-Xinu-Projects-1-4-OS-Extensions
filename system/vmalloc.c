@@ -73,13 +73,13 @@ char* vfound(virt_addr_t addr, uint32 nbytes) {
     for (i = addr.pd_offset; i < 1024; i++) {
         PDE = get_PDE_virt(PD_addr.fm_num, i);
         if (PDE.pd_valid == FALSE) {
-            debug_print("~~~NEW PDE~~~\n");
+            // debug_print("~~~NEW PDE~~~\n");
             index = new_PD_PT();
             set_PDE(fm_index(PD_addr), i, make_PDE(1, 1, page_list[index].addr.fm_num));
             PDE = get_PDE_virt(PD_addr.fm_num, i);
         }
         for (j = j_start; j < 1024; j++) {
-            debug_print("~~~NEW PTE~~~\n");
+            // debug_print("~~~NEW PTE~~~\n");
             numPages--;
             PT_addr.fm_num = PDE.pd_base;
             set_PTE(fm_index(PT_addr), j, make_PTE(0, 1, 0));
