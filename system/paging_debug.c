@@ -102,7 +102,7 @@ void debug_verify_PD_system_pages(void) {
                 PTE = get_PTE_virt(PDE.pd_base, j);
                 if (((i << 10) + j) != (PTE.pt_base)) {
                     verified = FALSE;
-                    debug_print("%05x | %05x %05x\n", PDE.pd_base, (i << 10) + j, PTE.pt_base);
+                    if (j < 4) debug_print("%05x | %05x %05x\n", PDE.pd_base, (i << 10) + j, PTE.pt_base);
                 }
             }
         }
@@ -133,7 +133,7 @@ void debug_verify_PD_xinu_pages(pid32 pid) {
                 PTE = get_PTE_virt(PDE.pd_base, j);
                 if (((i << 10) + j) != (PTE.pt_base)) {
                     verified = FALSE;
-                    debug_print("%05x | %05x %05x\n", PDE.pd_base, (i << 10) + j, PTE.pt_base);
+                    if (j < 4) debug_print("%05x | %05x %05x\n", PDE.pd_base, (i << 10) + j, PTE.pt_base);
                 }
             }
         }
@@ -164,4 +164,15 @@ syscall print_ready_list() {
         restore(mask);
     #endif
 	return OK;
+}
+
+void debug_print_page_list_valid_bits() {
+    #ifdef DEBUG
+        uint32 i;
+        for (i = 0; i < MAX_PT_SIZE; i++) {
+            if (!(i % 8)) debug_print("\n%3x | ", i);
+            debug_print("%d", page_list[i].valid);
+        }
+        debug_print("\n");
+    #endif
 }

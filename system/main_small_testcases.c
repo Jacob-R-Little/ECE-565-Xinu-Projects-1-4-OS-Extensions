@@ -2,12 +2,12 @@
 
 /* NOTE: set QUANTUM to 10ms */
 
+#ifdef SMALL_TEST
+
 #define TEST1
 #define TEST2
 #define TEST3
 #define TEST4
-
-// #ifdef SMALL_TEST
 
 void sync_printf(char *fmt, ...)
 {
@@ -248,4 +248,4 @@ process	main(void)
    	return OK; 
 }
 
-// #endif
+#endif

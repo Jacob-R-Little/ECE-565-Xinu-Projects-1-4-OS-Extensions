@@ -18,7 +18,7 @@ char* vmalloc(uint32 nbytes) {
     for (i = (XINU_PAGES >> 10); i < 1024; i++) {
         PDE = get_PDE_virt(PD_addr.fm_num, i);
         if (PDE.pd_valid == FALSE) {
-            debug_print("~~~vmalloc: PDE INVALID~~~\n");
+            // debug_print("~~~vmalloc: PDE INVALID~~~\n");
             if (counter == 0) {
                 start.pd_offset = i;
                 start.pt_offset = 0;
@@ -32,7 +32,7 @@ char* vmalloc(uint32 nbytes) {
             }
         }
         else {
-            debug_print("~~~vmalloc: PDE VALID~~~\n");
+            // debug_print("~~~vmalloc: PDE VALID~~~\n");
             for (j = 0; j < 1024; j++) {
                 PTE = get_PTE_virt(PDE.pd_base, j);
                 if (PTE.pt_valid == FALSE) {
@@ -68,7 +68,7 @@ char* vfound(virt_addr_t addr, uint32 nbytes) {
 
     uint32 numPages = (nbytes >> 12) + (uint32)((nbytes % (1 << 12)) != 0);
 
-    debug_print("~~~vfound~~~\n");
+    // debug_print("~~~vfound~~~\n");
 
     for (i = addr.pd_offset; i < 1024; i++) {
         PDE = get_PDE_virt(PD_addr.fm_num, i);

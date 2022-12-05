@@ -194,11 +194,11 @@ pt_t get_PTE_virt(uint32 frame, uint32 entry) {
 }
 
 uint32 fm_index(phy_addr_t addr) {
-	if (addr.fm_num > XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE)	// swap area address
+	if (addr.fm_num >= XINU_PAGES + MAX_FFS_SIZE + MAX_PT_SIZE)	// swap area address
 		return addr.fm_num - XINU_PAGES - MAX_FFS_SIZE - MAX_PT_SIZE;
-	if (addr.fm_num > XINU_PAGES + MAX_FFS_SIZE)	// page table area address
+	if (addr.fm_num >= XINU_PAGES + MAX_FFS_SIZE)	// page table area address
 		return addr.fm_num - XINU_PAGES - MAX_FFS_SIZE;
-	if (addr.fm_num > XINU_PAGES)	// FFS area address
+	if (addr.fm_num >= XINU_PAGES)	// FFS area address
 		return addr.fm_num - XINU_PAGES;
 	return addr.fm_num;	// XINU area page number
 }

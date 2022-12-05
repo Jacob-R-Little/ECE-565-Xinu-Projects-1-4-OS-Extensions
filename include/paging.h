@@ -4,8 +4,8 @@
 #define _PAGING_H_
 
 // #define MAIN
-#define SMALL_TEST
-// #define LARGE_TEST
+// #define SMALL_TEST
+#define LARGE_TEST
 
 // #define DEBUG
 
@@ -131,5 +131,6 @@ void debug_print_PD_Heap(pid32 pid);
 void debug_verify_PD_system_pages(void);
 void debug_verify_PD_xinu_pages(pid32 pid);
 syscall print_ready_list();
+void debug_print_page_list_valid_bits();
 
 #endif
