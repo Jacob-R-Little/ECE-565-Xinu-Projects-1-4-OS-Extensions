@@ -57,13 +57,12 @@ void test(uint32 numPages, uint32 numInitPages){
 #endif
     if(allocated_virtual_pages(currpid)!= PREALLOCATED_PAGES || used_ffs_frames(currpid)!=0){
 	error = 1;
+    debug_print("~~~P%02d (%05x) :: Began Poorly\n", currpid, read_cr3() >> 12);
     }
 
 #ifdef DEBUG
     sync_printf("\n[P%d] allocating %d pages ...\n", currpid, numPages);
 #endif
-
-    debug_print_page_list_valid_bits();
 
     // allocate virtual heap
     ptr = vmalloc(numPages * PAGE_SIZE);
@@ -73,6 +72,7 @@ void test(uint32 numPages, uint32 numInitPages){
 #endif
     if(allocated_virtual_pages(currpid)!= PREALLOCATED_PAGES+numPages || used_ffs_frames(currpid)!=0){
 	error = 1;
+    debug_print("~~~P%02d (%05x) :: Malloc Poorly\n", currpid, read_cr3() >> 12);
     }
 
     if (ptr==(char *)SYSERR){
@@ -90,8 +90,6 @@ void test(uint32 numPages, uint32 numInitPages){
     for(i =0; i<numInitPages; i++){
 	ptr[i*PAGE_SIZE] = 'A';
     }
-
-    debug_print_page_list_valid_bits();
     
 #ifdef DEBUG
     sync_printf("\n[P%d] %d pages initialized...\n", currpid, numInitPages);
@@ -99,6 +97,7 @@ void test(uint32 numPages, uint32 numInitPages){
 #endif
     if(allocated_virtual_pages(currpid)!= PREALLOCATED_PAGES+numPages || used_ffs_frames(currpid)!=numInitPages){
 	error = 1;
+    debug_print("~~~P%02d (%05x) :: Write Poorly\n", currpid, read_cr3() >> 12);
     }
 
     // read data
@@ -108,18 +107,15 @@ void test(uint32 numPages, uint32 numInitPages){
         if(c!='A'){
 	    sync_printf("[P%d] fail to read %d-th page\n", currpid, i);
             error = 1;
+            debug_print("~~~P%02d (%05x) :: Read Poorly\n", currpid, read_cr3() >> 12);
             break;
         }
     }
-
-    debug_print_page_list_valid_bits();
 
     if (vfree(ptr, numPages*PAGE_SIZE)==SYSERR){
 	sync_printf("[P%d] vfree failed\n", currpid);
 	kill(currpid);
     }
-
-    debug_print_page_list_valid_bits();
     
 #ifdef DEBUG
     sync_printf("\n[P%d] %d pages freed...\n", currpid, numPages);
@@ -127,6 +123,7 @@ void test(uint32 numPages, uint32 numInitPages){
 #endif
     if(allocated_virtual_pages(currpid)!= PREALLOCATED_PAGES || used_ffs_frames(currpid)!=0){
 	error = 1;
+    debug_print("~~~P%02d (%05x) :: Free Poorly\n", currpid, read_cr3() >> 12);
     }
 
     done = 1;
@@ -169,8 +166,6 @@ void test1_run(void){
     error = 0; done = 0;
 
     pid32 p1 = vcreate(test, 2000, 50, "test", 2, MAX_FFS_SIZE/2, MAX_FFS_SIZE/2);
-    debug_verify_PD_xinu_pages(p1);
-    debug_print("P%d :: PD = %x\n", p1, proctab[p1].page_dir.fm_num);
     resume(p1);
 
     receive();
@@ -186,8 +181,6 @@ void test2_run(void){
 
     error = 0; done = 0;
     pid32 p1 = vcreate(test, 2000, 50, "test", 2, MAX_FFS_SIZE, MAX_FFS_SIZE);
-    debug_verify_PD_xinu_pages(p1);
-    debug_print("P%d :: PD = %x\n", p1, proctab[p1].page_dir.fm_num);
     resume(p1);
 
     receive();
@@ -202,10 +195,6 @@ void test3_run(void){
     error = 0; done = 0;
 
     pid32 p1 = vcreate(test, 2000, 10, "P1", 2,  MAX_FFS_SIZE, MAX_FFS_SIZE);
-    debug_verify_PD_system_pages();
-    debug_verify_PD_xinu_pages(p1);
-    
-    debug_print("P%d :: PD = %x\n", p1, proctab[p1].page_dir.fm_num);
     resume(p1);
     // wait for the first process to be finished
     receive();

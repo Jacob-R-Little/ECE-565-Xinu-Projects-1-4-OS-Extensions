@@ -64,9 +64,16 @@ char* vfound(virt_addr_t addr, uint32 nbytes) {
     uint32 i,j;
     phy_addr_t PD_addr = proctab[currpid].page_dir, PT_addr;
     pd_t PDE;
-    uint32 index, j_start = addr.pt_offset;
+    uint32 index, j_start = addr.pt_offset, empty_page_list_indices = 0;
 
     uint32 numPages = (nbytes >> 12) + (uint32)((nbytes % (1 << 12)) != 0);
+    uint32 numPageTables = (numPages >> 10) + (uint32)((numPages % (1 << 10)) != 0);
+
+    for (i = 0; i < MAX_PT_SIZE; i++) {
+        if (page_list[i].valid == FALSE) empty_page_list_indices++;
+    }
+
+    if (numPageTables > empty_page_list_indices) return (char *)SYSERR;
 
     // debug_print("~~~vfound~~~\n");
 
@@ -146,9 +153,6 @@ syscall vdealloc(virt_addr_t addr, uint32 nbytes) {
     pt_t PTE;
     phy_addr_t frame;
 
-    intmask mask = disable();
-    set_PDBR(proctab[NULLPROC].page_dir);   // change to system virtual address space
-
     phy_addr_t PD_addr = proctab[currpid].page_dir, PT_addr;
     uint32 numPages = (nbytes >> 12) + (uint32)((nbytes % (1 << 12)) != 0);
 
@@ -168,7 +172,5 @@ syscall vdealloc(virt_addr_t addr, uint32 nbytes) {
         j_start = 0;
     }
 
-    set_PDBR(proctab[currpid].page_dir);    // return to current process virtual address space
-    restore(mask);
     return SYSERR;
 }

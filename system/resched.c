@@ -37,14 +37,14 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 
 	/* Force context switch to highest priority ready process */
 
-	pid32 old_pid = currpid;
+	// pid32 old_pid = currpid;
 	currpid = dequeue(readylist);
 	ptnew = &proctab[currpid];
 	ptnew->prstate = PR_CURR;
 	preempt = QUANTUM;		/* Reset time slice for process	*/
-	debug_print("ctxsw :: %d -> %d | pg_dir fm: %05x | ", old_pid, currpid, proctab[currpid].page_dir.fm_num);
+	// debug_print("ctxsw :: %d -> %d | pg_dir fm: %05x | ", old_pid, currpid, proctab[currpid].page_dir.fm_num);
 	set_PDBR(ptnew->page_dir);   // change to new virtual address space
-	debug_print("ctxsw successful!\n");
+	// debug_print("ctxsw successful!\n");
 	ctxsw(&ptold->prstkptr, &ptnew->prstkptr);
 
 	/* Old process returns here when resumed */

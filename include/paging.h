@@ -4,8 +4,8 @@
 #define _PAGING_H_
 
 // #define MAIN
-// #define SMALL_TEST
-#define LARGE_TEST
+#define SMALL_TEST
+// #define LARGE_TEST
 
 // #define DEBUG
 
