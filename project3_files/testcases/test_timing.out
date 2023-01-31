@@ -1,0 +1,9 @@
+=========== TEST 1: spinlock & 2 threads  ===================
+
+Time = 14500 ms
+
+
+=========== TEST 2: lock w/sleep & 2 threads  ===============
+
+Time = 10000 ms
+

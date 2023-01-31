@@ -1,0 +1,7 @@
+=========== TEST for deadlocks  ===================
+
+deadlock_detected=P5-P6
+deadlock_detected=P7-P8-P9-P10-P11
+deadlock_detected=P12-P13-P14-P15-P16
+deadlock_detected=P17-P18-P21
+P24 completed
