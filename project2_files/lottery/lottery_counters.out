@@ -1,0 +1,18 @@
+================= TESTCASE 1: 2 processes ======================
+Test RESULT: A : B (51 : 48)
+
+
+================= TESTCASE 2: 2 processes ======================
+Test RESULT: A : B (100 : 0)
+
+
+================= TESTCASE 3: 2 processes ======================
+Test RESULT: A : B (75 : 24)
+
+
+================= TESTCASE 4: 4 processes ======================
+Test RESULT: A : B : C : D (54 : 27 : 12 : 5)
+
+
+================= TESTCASE 5: 4 processes ======================
+Test RESULT: A : B : C : D (38 : 34 : 13 : 13)
