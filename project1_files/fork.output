@@ -1,0 +1,47 @@
+[TESTCASE-1]
+HELLO! I am process 6
+process 6:: forked child 7
+process 7:: pid=100
+GOODBYE! I am process 7
+process 6:: pid=7
+GOODBYE! I am process 6
+[END-TESTCASE-1]
+                                                                                
+                                                                                
+[TESTCASE-2]                                                                    
+HELLO! I am process 8                                                           
+process 8:: forked child 9                                                      
+process 9:: forked child 10                                                     
+process 10:: forked child 11                                                    
+GOODBYE! I am process 11                                                        
+GOODBYE! I am process 10                                                        
+process 9:: forked child 12                                                     
+GOODBYE! I am process 12                                                        
+GOODBYE! I am process 9                                                         
+process 8:: forked child 13                                                     
+process 13:: forked child 14                                                    
+GOODBYE! I am process 14                                                        
+GOODBYE! I am process 13                                                        
+process 8:: forked child 15                                                     
+GOODBYE! I am process 15                                                        
+GOODBYE! I am process 8                                                         
+[END-TESTCASE-2]                                                                
+                                                                                
+                                                                                
+[TESTCASE-3]                                                                    
+process 16:: forked child 17                                                    
+process 17:: forked child 18                                                    
+process 18:: forked child 19                                                    
+process 19:: c=0x5e3fd8, *c=27, d=0x5e3fd4, *d=19, *v=100                       
+process 18:: c=0x5e3fd8, *c=27, d=0x5e3fd4, *d=37, *v=19                        
+process 17:: forked child 20                                                    
+process 20:: c=0x5e3fd8, *c=27, d=0x5e3fd4, *d=57, *v=100                       
+process 17:: c=0x5e3fd8, *c=27, d=0x5e3fd4, *d=74, *v=20                        
+process 16:: forked child 21                                                    
+process 21:: forked child 22                                                    
+process 22:: c=0x5e3fd8, *c=27, d=0x5e3fd4, *d=96, *v=100                       
+process 21:: c=0x5e3fd8, *c=27, d=0x5e3fd4, *d=117, *v=22                       
+process 16:: forked child 23                                                    
+process 23:: c=0x5e3fd8, *c=27, d=0x5e3fd4, *d=140, *v=100                      
+process 16:: c=0x5e3fd8, *c=27, d=0x5e3fd4, *d=156, *v=23                       
+[END-TESTCASE-3]

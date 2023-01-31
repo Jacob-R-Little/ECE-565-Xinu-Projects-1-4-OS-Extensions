@@ -1,0 +1,25 @@
+# ignore build artifacts
+compile/binaries/
+
+compile/.defs
+
+compile/.vers_num
+
+compile/version
+
+compile/xinu.elf
+
+compile/xinu.map
+
+config/config
+
+config/lex.yy.c
+
+config/y.tab.c
+
+include/conf.h
+
+system/conf.c
+
+#ignore vscode directory
+.vscode
