@@ -1,0 +1,41 @@
+QUANTUM=5, TIME_ALLOTMENT=100, PRIORITY_BOOST_PERIOD=100000
+
+=== TESTCASE 1::  CPU-intensive jobs =============================
+process 5:: name=cpu_1000, runtime=1000, turnaround time=2000, ctx=72
+process 6:: name=cpu_1000, runtime=1000, turnaround time=2000, ctx=72
+==================================================================
+
+=== TESTCASE 2::  CPU-intensive jobs =============================
+process 7:: name=cpu_1000, runtime=1000, turnaround time=2200, ctx=72
+process 8:: name=cpu_1000, runtime=1000, turnaround time=2200, ctx=72
+process 9:: name=cpu_1000_new, runtime=1000, turnaround time=3720, ctx=29
+process 10:: name=cpu_1000_del, runtime=1000, turnaround time=4000, ctx=29
+==================================================================
+
+=== TESTCASE 3::  interactive jobs =============================
+process 11:: name=burst_100/5/5, runtime=500, turnaround time=2093, ctx=188
+process 12:: name=burst_100/5/5, runtime=500, turnaround time=2119, ctx=190
+process 13:: name=burst_100/5/5, runtime=501, turnaround time=2104, ctx=189
+process 14:: name=burst_100/5/5, runtime=500, turnaround time=2022, ctx=178
+==================================================================
+
+=== TESTCASE 4: mixed jobs =============================
+process 15:: name=cpu_1000, runtime=1001, turnaround time=3001, ctx=115
+process 16:: name=cpu_1000, runtime=1000, turnaround time=2995, ctx=115
+process 17:: name=burst_100/5/5, runtime=500, turnaround time=2649, ctx=128
+process 18:: name=burst_100/5/5, runtime=500, turnaround time=2709, ctx=132
+==================================================================
+
+=== TESTCASE 5::  mixed jobs =============================
+process 19:: name=cpu_1000, runtime=1000, turnaround time=2400, ctx=114
+process 20:: name=cpu_1000, runtime=1000, turnaround time=2389, ctx=109
+process 21:: name=burst_100/2/8, runtime=200, turnaround time=1240, ctx=127
+process 22:: name=burst_100/2/8, runtime=200, turnaround time=1240, ctx=127
+==================================================================
+
+=== TESTCASE 6::  mixed jobs =============================
+process 23:: name=cpu_1000, runtime=1000, turnaround time=2237, ctx=119
+process 24:: name=burst_100/1/9, runtime=100, turnaround time=1109, ctx=103
+process 25:: name=burst_100/5/5, runtime=500, turnaround time=2325, ctx=125
+process 26:: name=burst_20/40/10, runtime=801, turnaround time=2436, ctx=123
+==================================================================

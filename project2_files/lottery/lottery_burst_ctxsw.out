@@ -1,0 +1,48 @@
+=== TESTCASE 1:: 1 process with burst execution - context switches ======
+ctxsw::4-5
+ctxsw::5-0
+ctxsw::0-5
+ctxsw::5-0
+ctxsw::0-5
+ctxsw::5-0
+ctxsw::0-5
+ctxsw::5-0
+ctxsw::0-5
+ctxsw::5-4
+ctxsw::4-5
+ctxsw::5-0
+ctxsw::0-4
+
+process 5:: runtime=161, turnaround time=322, ctx=6
+=========================================================================
+
+=== TESTCASE 2::  2 processes with burst execution - context switches ===
+ctxsw::4-6
+ctxsw::6-7
+ctxsw::7-6
+ctxsw::6-7
+ctxsw::7-0
+ctxsw::0-6
+ctxsw::6-7
+ctxsw::7-6
+ctxsw::6-7
+ctxsw::7-0
+ctxsw::0-6
+ctxsw::6-7
+ctxsw::7-6
+ctxsw::6-7
+ctxsw::7-0
+ctxsw::0-6
+ctxsw::6-4
+ctxsw::4-6
+ctxsw::6-7
+ctxsw::7-0
+ctxsw::0-7
+ctxsw::7-4
+ctxsw::4-7
+ctxsw::7-0
+ctxsw::0-4
+
+process 6:: runtime=161, turnaround time=342, ctx=8
+process 7:: runtime=161, turnaround time=423, ctx=9
+=========================================================================
